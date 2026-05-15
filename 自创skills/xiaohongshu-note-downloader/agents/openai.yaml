@@ -1,0 +1,4 @@
+interface:
+  display_name: "Xiaohongshu Note Downloader"
+  short_description: "Save Xiaohongshu notes locally"
+  default_prompt: "Download this Xiaohongshu note link into a local title-named folder with HTML and images."

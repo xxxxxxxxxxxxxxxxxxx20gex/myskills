@@ -1,0 +1,4 @@
+interface:
+  display_name: "Douyin Video Downloader"
+  short_description: "Save Douyin videos locally"
+  default_prompt: "Download this Douyin link into a local title-named folder with HTML, video, images, and metadata."

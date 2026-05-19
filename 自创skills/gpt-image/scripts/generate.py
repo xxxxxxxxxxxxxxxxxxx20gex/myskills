@@ -75,7 +75,7 @@ def _resolve_size(value: str) -> str:
 
 
 def _default_output_path(prompt: str, extension: str) -> Path:
-    target_dir = Path(__file__).resolve().parents[1]
+    target_dir = Path(__file__).resolve().parents[1] / "workspace"
     stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     slug = "".join(ch.lower() if ch.isalnum() else "-" for ch in prompt).strip("-")
     slug = "-".join(part for part in slug.split("-") if part)[:30] or "image"

@@ -1,7 +1,7 @@
 ---
 name: gpt-image
 description: "Use this skill whenever a user asks to generate, create, draw, render, or edit images with GPT Image 2 / gpt-image-2, text-to-image, reference-image editing, inpainting, posters, typography, Chinese text, UI mockups, diagrams, or gallery prompts. Analyze the user's prompt, search the bundled Reference Gallery/craft files for matching design patterns, confer on direction when useful, then call the bundled `scripts/generate.py`. Do not write new image-generation code unless explicitly asked to modify this repo."
-compatibility: "Requires Python 3.11+ and RIGHT_CODES_API_KEY in the process environment. This local copy calls the Right Code relay at https://www.right.codes/draw directly; `gpt-image`, `uv`, and `uvx` are not required."
+compatibility: "Requires Python 3.11+ and RIGHT_CODES_API_KEY in the process environment or a local `.env` file. This local copy calls the Right Code relay at https://www.right.codes/draw directly; `gpt-image`, `uv`, and `uvx` are not required."
 metadata: {"openclaw":{"requires":{"anyBins":["python"]},"primaryEnv":"RIGHT_CODES_API_KEY","homepage":"https://github.com/wuyoscar/gpt_image_2_skill"}}
 ---
 
@@ -9,7 +9,7 @@ metadata: {"openclaw":{"requires":{"anyBins":["python"]},"primaryEnv":"RIGHT_COD
 
 ## Local Right Code Configuration
 
-This workstation copy is intentionally configured to use the Right Code relay directly. Set `RIGHT_CODES_API_KEY` in the process environment before running. `scripts/generate.py` injects `OPENAI_BASE_URL=https://www.right.codes/draw/v1` and `RIGHT_CODES_BASE_URL=https://www.right.codes/draw`, then calls the direct Right Code HTTP generation path. It does not require `gpt-image`, `uv`, or `uvx`.
+This workstation copy is intentionally configured to use the Right Code relay directly. `scripts/generate.py` loads `RIGHT_CODES_API_KEY` from the skill root `.env` file when present, while preserving any value already set in the process environment. It also injects `OPENAI_BASE_URL=https://www.right.codes/draw/v1` and `RIGHT_CODES_BASE_URL=https://www.right.codes/draw`, then calls the direct Right Code HTTP generation path. It does not require `gpt-image`, `uv`, or `uvx`.
 
 Agent runbook for GPT Image 2 generation/editing. Use the prompt library + packaged CLI. Do not reimplement image API code.
 
@@ -38,7 +38,7 @@ python "$SKILL_DIR/scripts/generate.py" -p "PROMPT" [-f OUT] [-i REF...] [-m MAS
 
 ## Key and cost rules
 
-- The script reads `RIGHT_CODES_API_KEY` from the process environment. Do not commit real keys.
+- The script reads `RIGHT_CODES_API_KEY` from the process environment first, then from the skill root `.env` file. Do not commit real keys.
 - If host/runtime has native platform-managed image generation and the user wants that path, use the host tool instead of this CLI.
 - If `RIGHT_CODES_API_KEY` is unset, report the missing key or use host-native generation when requested; do not write secrets.
 - Never print secret values.

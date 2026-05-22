@@ -1,0 +1,4 @@
+interface:
+  display_name: "PPT Technical Redesign"
+  short_description: "Upgrade plain PPT into technical layouts"
+  default_prompt: "Polish this PPT page into a more professional technical presentation layout."

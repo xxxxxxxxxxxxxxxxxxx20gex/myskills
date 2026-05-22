@@ -1,0 +1,4 @@
+interface:
+  display_name: "HTML PPT Build"
+  short_description: "Build HTML slide decks and HD PPTX."
+  default_prompt: "Use $html-ppt-build to create an HTML-based technical PPT from source materials, with independent slide files, CSS, preview index, visual assets, and HD PPTX export."

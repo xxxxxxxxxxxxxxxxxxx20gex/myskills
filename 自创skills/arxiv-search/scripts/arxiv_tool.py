@@ -5,6 +5,7 @@ import json
 import os
 import random
 import re
+import socket
 import sys
 import tempfile
 import time
@@ -14,9 +15,11 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from contextlib import contextmanager
 from datetime import datetime
+from html.parser import HTMLParser
 from typing import Any
 
 ARXIV_API_URL = "https://export.arxiv.org/api/query"
+ARXIV_SEARCH_URL = "https://arxiv.org/search/"
 RATE_LIMIT_SECONDS = 3.1
 DEFAULT_HTTP_TIMEOUT_SECONDS = 15
 LOCK_WAIT_TIMEOUT_SECONDS = 120
@@ -26,6 +29,8 @@ MAX_RETRY_ATTEMPTS = 3
 RETRY_BACKOFF_BASE_SECONDS = 1.0
 RETRY_BACKOFF_MAX_SECONDS = 8.0
 RETRY_BACKOFF_JITTER_SECONDS = 0.25
+RATE_LIMIT_HTTP_COOLDOWN_SECONDS = 60.0
+RATE_LIMIT_HTTP_STATE_TTL_SECONDS = 300
 MISSING_VALUE = "missing"
 ARXIV_XML_NS = {
     "atom": "http://www.w3.org/2005/Atom",
@@ -34,6 +39,12 @@ ARXIV_XML_NS = {
 }
 SORT_BY_VALUES = {"relevance", "submittedDate", "lastUpdatedDate"}
 SORT_ORDER_VALUES = {"ascending", "descending"}
+SEARCH_PAGE_SIZE_VALUES = (25, 50, 100, 200)
+REQUEST_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) codex-arxiv-search-skill/1.0",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+}
 
 
 class ToolError(Exception):
@@ -55,20 +66,22 @@ def arxiv_rate_limit_lock():
             os.mkdir(lock_path)
             break
         except FileExistsError:
-            if time.monotonic() - lock_wait_started > LOCK_WAIT_TIMEOUT_SECONDS:
-                raise ToolError("RATE_LIMIT_LOCK_TIMEOUT", "Timed out waiting for the local arXiv rate-limit lock")
             if time.time() - os.path.getmtime(lock_path) > STALE_LOCK_SECONDS:
                 try:
                     os.rmdir(lock_path)
                 except OSError:
                     pass
+                continue
+            if time.monotonic() - lock_wait_started > LOCK_WAIT_TIMEOUT_SECONDS:
+                raise ToolError("RATE_LIMIT_LOCK_TIMEOUT", "Timed out waiting for the local arXiv rate-limit lock")
             time.sleep(0.2)
 
     try:
         if os.path.exists(state_path):
             with open(state_path, "r", encoding="utf-8") as state_file:
                 last_request_at = float(json.load(state_file).get("last_request_at", 0))
-            wait_seconds = RATE_LIMIT_SECONDS - (time.monotonic() - last_request_at)
+            elapsed_seconds = time.monotonic() - last_request_at
+            wait_seconds = RATE_LIMIT_SECONDS - elapsed_seconds if elapsed_seconds >= 0 else 0
             if wait_seconds > 0:
                 time.sleep(wait_seconds)
         with open(state_path, "w", encoding="utf-8") as state_file:
@@ -361,6 +374,249 @@ def parse_arxiv_feed(feed_text: str, include_abstract: bool, include_pdf_url: bo
     }
 
 
+def search_page_size(max_results: int) -> int:
+    for size in SEARCH_PAGE_SIZE_VALUES:
+        if max_results <= size:
+            return size
+    return SEARCH_PAGE_SIZE_VALUES[-1]
+
+
+def search_page_order(sort_by: str, sort_order: str) -> str | None:
+    if sort_by == "relevance":
+        return None
+    if sort_by == "lastUpdatedDate":
+        return "-announced_date_first" if sort_order == "descending" else "announced_date_first"
+    return "-announced_date_first" if sort_order == "descending" else "announced_date_first"
+
+
+def search_page_query(params: dict[str, str]) -> str:
+    query = params["search_query"]
+    query = re.sub(r"submittedDate:\[[^\]]+\]", " ", query)
+    query = re.sub(r"\bcat:[A-Za-z0-9.]+", " ", query)
+    query = re.sub(r"\b(all|ti|au|abs):", "", query)
+    query = re.sub(r"\b(ANDNOT|AND|OR)\b", " ", query)
+    query = query.replace('"', " ").replace("(", " ").replace(")", " ")
+    return " ".join(query.split())
+
+
+def search_page_categories(params: dict[str, str]) -> set[str]:
+    return set(re.findall(r"\bcat:([A-Za-z0-9.]+)", params["search_query"]))
+
+
+def parse_search_page_date(value: str) -> str:
+    match = re.search(r"Submitted\s+([^;]+)", value)
+    if not match:
+        return MISSING_VALUE
+    raw_date = match.group(1).strip()
+    for pattern in ("%d %B, %Y", "%B %d, %Y"):
+        try:
+            return datetime.strptime(raw_date, pattern).strftime("%Y-%m-%d")
+        except ValueError:
+            pass
+    return raw_date
+
+
+class ArxivSearchPageParser(HTMLParser):
+    def __init__(self, include_abstract: bool, include_pdf_url: bool):
+        super().__init__(convert_charrefs=True)
+        self.include_abstract = include_abstract
+        self.include_pdf_url = include_pdf_url
+        self.results: list[dict[str, Any]] = []
+        self.current: dict[str, Any] | None = None
+        self.depth = 0
+        self.link_text = False
+        self.link_href = ""
+        self.in_title = False
+        self.in_authors = False
+        self.in_abstract = False
+        self.abstract_depth = 0
+        self.in_submitted = False
+        self.submitted_depth = 0
+        self.in_tag = False
+        self.text_buffer: list[str] = []
+        self.author_buffer: list[str] = []
+        self.abstract_buffer: list[str] = []
+        self.submitted_buffer: list[str] = []
+        self.tag_buffer: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attr = {key: value or "" for key, value in attrs}
+        classes = attr.get("class", "").split()
+        if self.current is None and tag == "li" and "arxiv-result" in classes:
+            self.current = {
+                "id": MISSING_VALUE,
+                "title": MISSING_VALUE,
+                "authors": [],
+                "published": MISSING_VALUE,
+                "updated": MISSING_VALUE,
+                "primary_category": MISSING_VALUE,
+                "categories": [],
+                "paper_url": MISSING_VALUE,
+                "doi": MISSING_VALUE,
+                "journal_ref": MISSING_VALUE,
+                "comment": MISSING_VALUE,
+                "raw_entry_id": MISSING_VALUE,
+            }
+            if self.include_abstract:
+                self.current["summary"] = MISSING_VALUE
+            if self.include_pdf_url:
+                self.current["pdf_url"] = MISSING_VALUE
+                self.current["versioned_pdf_url"] = MISSING_VALUE
+            self.depth = 1
+            return
+        if self.current is None:
+            return
+
+        self.depth += 1
+        if tag == "a":
+            href = attr.get("href", "")
+            if "/abs/" in href or "/pdf/" in href:
+                self.link_text = True
+                self.link_href = href
+                self.text_buffer = []
+            if self.in_authors:
+                self.author_buffer = []
+        if tag == "p" and "title" in classes:
+            self.in_title = True
+            self.text_buffer = []
+        if tag == "p" and "authors" in classes:
+            self.in_authors = True
+        if tag == "span" and "abstract-full" in classes and attr.get("id", "").endswith("-abstract-full"):
+            self.in_abstract = True
+            self.abstract_depth = 1
+            self.abstract_buffer = []
+        elif self.in_abstract and tag == "span":
+            self.abstract_depth += 1
+        if tag == "p" and "is-size-7" in classes:
+            self.in_submitted = True
+            self.submitted_depth = 1
+            self.submitted_buffer = []
+        elif self.in_submitted:
+            self.submitted_depth += 1
+        if tag == "span" and "tag" in classes:
+            self.in_tag = True
+            self.tag_buffer = []
+
+    def handle_endtag(self, tag: str) -> None:
+        if self.current is None:
+            return
+        if self.link_text and tag == "a":
+            href = self.link_href
+            if "/abs/" in href:
+                arxiv_id = href.rsplit("/abs/", 1)[-1].strip("/")
+                self.current["id"] = arxiv_id
+                self.current["paper_url"] = build_arxiv_abs_url(arxiv_id)
+                self.current["raw_entry_id"] = f"http://arxiv.org/abs/{arxiv_id}"
+            elif self.include_pdf_url and "/pdf/" in href:
+                arxiv_id = href.rsplit("/pdf/", 1)[-1].strip("/")
+                self.current["pdf_url"] = build_arxiv_pdf_url(arxiv_id)
+                self.current["versioned_pdf_url"] = f"https://arxiv.org/pdf/{arxiv_id}"
+            self.link_text = False
+            self.link_href = ""
+            self.text_buffer = []
+        if self.in_title and tag == "p":
+            self.current["title"] = " ".join("".join(self.text_buffer).split()) or MISSING_VALUE
+            self.in_title = False
+            self.text_buffer = []
+        if self.in_authors and tag == "a":
+            author = " ".join("".join(self.author_buffer).split())
+            if author:
+                self.current["authors"].append(author)
+            self.author_buffer = []
+        if self.in_authors and tag == "p":
+            self.in_authors = False
+        if self.in_abstract and tag == "span":
+            self.abstract_depth -= 1
+        if self.in_abstract and self.abstract_depth == 0:
+            summary = " ".join("".join(self.abstract_buffer).split())
+            summary = re.sub(r"^Abstract\s*:\s*", "", summary)
+            summary = re.sub(r"\s*[△▽]\s*(Less|More)\s*$", "", summary)
+            if summary:
+                self.current["summary"] = summary
+            self.in_abstract = False
+            self.abstract_depth = 0
+        if self.in_submitted:
+            self.submitted_depth -= 1
+        if self.in_submitted and self.submitted_depth == 0:
+            submitted = " ".join("".join(self.submitted_buffer).split())
+            if "Submitted" in submitted:
+                self.current["published"] = parse_search_page_date(submitted)
+            self.in_submitted = False
+            self.submitted_depth = 0
+        if self.in_tag and tag == "span":
+            category = "".join(self.tag_buffer).strip()
+            if re.fullmatch(r"[a-z]{2,}(?:\.[A-Z]{2,})?", category):
+                self.current["categories"].append(category)
+                if self.current["primary_category"] == MISSING_VALUE:
+                    self.current["primary_category"] = category
+            self.in_tag = False
+
+        self.depth -= 1
+        if tag == "li" and self.depth == 0:
+            self.results.append(self.current)
+            self.current = None
+
+    def handle_data(self, data: str) -> None:
+        if self.current is None:
+            return
+        if self.link_text or self.in_title:
+            self.text_buffer.append(data)
+        if self.in_authors:
+            self.author_buffer.append(data)
+        if self.in_abstract:
+            self.abstract_buffer.append(data)
+        if self.in_submitted:
+            self.submitted_buffer.append(data)
+        if self.in_tag:
+            self.tag_buffer.append(data)
+
+
+def parse_arxiv_search_page(
+    page_text: str,
+    include_abstract: bool,
+    include_pdf_url: bool,
+    max_results: int,
+    categories: set[str],
+) -> dict[str, Any]:
+    parser = ArxivSearchPageParser(include_abstract, include_pdf_url)
+    parser.feed(page_text)
+    results = parser.results
+    if categories:
+        results = [result for result in results if categories.intersection(result["categories"])]
+    return {
+        "title": "arXiv Search",
+        "updated": MISSING_VALUE,
+        "total_results": MISSING_VALUE,
+        "start_index": MISSING_VALUE,
+        "items_per_page": str(search_page_size(max_results)),
+        "count": min(len(results), max_results),
+        "results": results[:max_results],
+    }
+
+
+def fetch_arxiv_search_page(params: dict[str, str], options: dict[str, Any]) -> str:
+    if "search_query" not in params or int(params["start"]) != 0:
+        raise ToolError("ARXIV_REQUEST_FAILED", "arXiv API request failed and search-page fallback cannot handle this request")
+    page_params = {
+        "query": search_page_query(params),
+        "searchtype": "all",
+        "abstracts": "show" if options["include_abstract"] else "hide",
+        "size": str(search_page_size(options["max_results"])),
+    }
+    order = search_page_order(options["sort_by"], options["sort_order"])
+    if order:
+        page_params["order"] = order
+    url = f"{ARXIV_SEARCH_URL}?{urllib.parse.urlencode(page_params)}"
+    request = urllib.request.Request(url, headers=REQUEST_HEADERS)
+    try:
+        with urllib.request.urlopen(request, timeout=options["timeout_seconds"]) as response:
+            return response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        raise ToolError("ARXIV_REQUEST_FAILED", f"arXiv search page fallback failed with HTTP {exc.code}: {exc.reason}") from exc
+    except (urllib.error.URLError, TimeoutError, socket.timeout, OSError) as exc:
+        raise ToolError("ARXIV_REQUEST_FAILED", f"arXiv search page fallback failed: {exc}") from exc
+
+
 def retry_delay_seconds(attempt: int, retry_after: str | None = None) -> float:
     delay = min(RETRY_BACKOFF_MAX_SECONDS, RETRY_BACKOFF_BASE_SECONDS * (2**attempt))
     if retry_after:
@@ -371,6 +627,40 @@ def retry_delay_seconds(attempt: int, retry_after: str | None = None) -> float:
     return delay + random.uniform(0, RETRY_BACKOFF_JITTER_SECONDS)
 
 
+def rate_limit_state_path() -> str:
+    state_dir = os.path.join(tempfile.gettempdir(), "arxiv-search-skill")
+    os.makedirs(state_dir, exist_ok=True)
+    return os.path.join(state_dir, "http-429-until.json")
+
+
+def read_http_rate_limit_until() -> float:
+    state_path = rate_limit_state_path()
+    if not os.path.exists(state_path):
+        return 0.0
+    try:
+        if time.time() - os.path.getmtime(state_path) > RATE_LIMIT_HTTP_STATE_TTL_SECONDS:
+            return 0.0
+        with open(state_path, "r", encoding="utf-8") as state_file:
+            retry_after_monotonic = float(json.load(state_file).get("retry_after_monotonic", 0))
+        return min(retry_after_monotonic, time.monotonic() + RATE_LIMIT_HTTP_COOLDOWN_SECONDS)
+    except (OSError, ValueError, json.JSONDecodeError):
+        return 0.0
+
+
+def write_http_rate_limit_until(retry_after_seconds: float) -> None:
+    with open(rate_limit_state_path(), "w", encoding="utf-8") as state_file:
+        json.dump({"retry_after_monotonic": time.monotonic() + retry_after_seconds}, state_file)
+
+
+def http_429_delay_seconds(retry_after: str | None = None) -> float:
+    if retry_after:
+        try:
+            return max(RATE_LIMIT_HTTP_COOLDOWN_SECONDS, max(0.0, float(retry_after)))
+        except ValueError:
+            pass
+    return RATE_LIMIT_HTTP_COOLDOWN_SECONDS
+
+
 def fetch_arxiv(params: dict[str, str], timeout_seconds: int) -> str:
     encoded_params = urllib.parse.urlencode(params)
     url = f"{ARXIV_API_URL}?{encoded_params}"
@@ -378,11 +668,23 @@ def fetch_arxiv(params: dict[str, str], timeout_seconds: int) -> str:
 
     for attempt in range(MAX_RETRY_ATTEMPTS):
         try:
+            retry_after_monotonic = read_http_rate_limit_until()
+            wait_seconds = retry_after_monotonic - time.monotonic()
+            if wait_seconds > 0:
+                raise ToolError(
+                    "ARXIV_RATE_LIMITED",
+                    f"arXiv rate limit cooldown is active; retry after about {int(wait_seconds) + 1} seconds",
+                )
             with arxiv_rate_limit_lock():
-                request = urllib.request.Request(url, headers={"User-Agent": "codex-arxiv-search-skill/1.0"})
-                with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
-                    return response.read().decode("utf-8")
+                request = urllib.request.Request(url, headers=REQUEST_HEADERS)
+            with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+                return response.read().decode("utf-8")
         except urllib.error.HTTPError as exc:
+            if exc.code == 429:
+                delay = http_429_delay_seconds(exc.headers.get("Retry-After"))
+                write_http_rate_limit_until(delay)
+                errors.append(f"HTTP 429: rate exceeded; retry after about {int(delay)} seconds")
+                break
             if exc.code in RETRY_STATUS_CODES and attempt < MAX_RETRY_ATTEMPTS - 1:
                 time.sleep(retry_delay_seconds(attempt, exc.headers.get("Retry-After")))
                 continue
@@ -392,8 +694,11 @@ def fetch_arxiv(params: dict[str, str], timeout_seconds: int) -> str:
                 time.sleep(retry_delay_seconds(attempt))
                 continue
             errors.append(f"URL error: {exc.reason}")
-        except TimeoutError as exc:
-            raise exc
+        except (TimeoutError, socket.timeout) as exc:
+            if attempt < MAX_RETRY_ATTEMPTS - 1:
+                time.sleep(retry_delay_seconds(attempt))
+                continue
+            errors.append(f"Timeout: {exc}")
         except OSError as exc:
             if attempt < MAX_RETRY_ATTEMPTS - 1:
                 time.sleep(retry_delay_seconds(attempt))
@@ -407,8 +712,22 @@ def handle_request(request: dict[str, Any]) -> dict[str, Any]:
     action = optional_string(request.get("action"), "action")
     options = normalize_options(optional_object(request.get("options"), "options"))
     params = build_api_params(request, options)
-    feed = fetch_arxiv(params, options["timeout_seconds"])
-    parsed = parse_arxiv_feed(feed, options["include_abstract"], options["include_pdf_url"])
+    source = "export_api"
+    try:
+        feed = fetch_arxiv(params, options["timeout_seconds"])
+        parsed = parse_arxiv_feed(feed, options["include_abstract"], options["include_pdf_url"])
+    except ToolError:
+        if action != "search":
+            raise
+        source = "search_page_fallback"
+        page = fetch_arxiv_search_page(params, options)
+        parsed = parse_arxiv_search_page(
+            page,
+            options["include_abstract"],
+            options["include_pdf_url"],
+            options["max_results"],
+            search_page_categories(params),
+        )
     return {
         "ok": True,
         "action": action,
@@ -416,6 +735,7 @@ def handle_request(request: dict[str, Any]) -> dict[str, Any]:
         "meta": {
             **parsed,
             "api_params": params,
+            "source": source,
         },
     }
 

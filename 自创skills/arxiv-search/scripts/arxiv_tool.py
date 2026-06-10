@@ -21,11 +21,11 @@ from typing import Any
 ARXIV_API_URL = "https://export.arxiv.org/api/query"
 ARXIV_SEARCH_URL = "https://arxiv.org/search/"
 RATE_LIMIT_SECONDS = 3.1
-DEFAULT_HTTP_TIMEOUT_SECONDS = 15
-LOCK_WAIT_TIMEOUT_SECONDS = 120
+DEFAULT_HTTP_TIMEOUT_SECONDS = 8
+LOCK_WAIT_TIMEOUT_SECONDS = 5
 STALE_LOCK_SECONDS = 160
 RETRY_STATUS_CODES = {429, 500, 502, 503, 504}
-MAX_RETRY_ATTEMPTS = 3
+MAX_RETRY_ATTEMPTS = 1
 RETRY_BACKOFF_BASE_SECONDS = 1.0
 RETRY_BACKOFF_MAX_SECONDS = 8.0
 RETRY_BACKOFF_JITTER_SECONDS = 0.25
@@ -545,7 +545,7 @@ class ArxivSearchPageParser(HTMLParser):
             self.submitted_depth = 0
         if self.in_tag and tag == "span":
             category = "".join(self.tag_buffer).strip()
-            if re.fullmatch(r"[a-z]{2,}(?:\.[A-Z]{2,})?", category):
+            if re.fullmatch(r"[a-z]+(?:\.[A-Z]{2,})", category):
                 self.current["categories"].append(category)
                 if self.current["primary_category"] == MISSING_VALUE:
                     self.current["primary_category"] = category
@@ -615,6 +615,62 @@ def fetch_arxiv_search_page(params: dict[str, str], options: dict[str, Any]) -> 
         raise ToolError("ARXIV_REQUEST_FAILED", f"arXiv search page fallback failed with HTTP {exc.code}: {exc.reason}") from exc
     except (urllib.error.URLError, TimeoutError, socket.timeout, OSError) as exc:
         raise ToolError("ARXIV_REQUEST_FAILED", f"arXiv search page fallback failed: {exc}") from exc
+
+
+def advanced_search_terms(query: dict[str, Any]) -> list[tuple[str, str]]:
+    fields = [
+        ("text", "all"),
+        ("title", "title"),
+        ("author", "author"),
+        ("abstract", "abstract"),
+    ]
+    terms = []
+    for query_key, search_field in fields:
+        term = query.get(query_key)
+        if term:
+            terms.append((search_field, str(term)))
+    return terms
+
+
+def advanced_search_date(value: Any) -> str:
+    return str(value)[:8].replace("-", "")
+
+
+def fetch_arxiv_advanced_search_page(query: dict[str, Any], options: dict[str, Any]) -> str:
+    terms = advanced_search_terms(query)
+    if not terms:
+        raise ToolError("ARXIV_REQUEST_FAILED", "arXiv advanced search fallback cannot handle this request")
+
+    page_params = {
+        "advanced": "",
+        "classification-include_cross_list": "include",
+        "date-filter_by": "all_dates",
+        "abstracts": "show" if options["include_abstract"] else "hide",
+        "size": str(search_page_size(options["max_results"])),
+    }
+    for index, (field, term) in enumerate(terms):
+        page_params[f"terms-{index}-operator"] = "AND"
+        page_params[f"terms-{index}-term"] = term
+        page_params[f"terms-{index}-field"] = field
+
+    if query.get("submitted_from") and query.get("submitted_to"):
+        page_params["date-filter_by"] = "date_range"
+        page_params["date-from_date"] = advanced_search_date(query["submitted_from"])
+        page_params["date-to_date"] = advanced_search_date(query["submitted_to"])
+
+    order = search_page_order(options["sort_by"], options["sort_order"])
+    if order:
+        page_params["order"] = order
+
+    url = f"{ARXIV_SEARCH_URL}advanced?{urllib.parse.urlencode(page_params)}"
+    request = urllib.request.Request(url, headers=REQUEST_HEADERS)
+    try:
+        with urllib.request.urlopen(request, timeout=options["timeout_seconds"]) as response:
+            return response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        raise ToolError("ARXIV_REQUEST_FAILED", f"arXiv advanced search fallback failed with HTTP {exc.code}: {exc.reason}") from exc
+    except (urllib.error.URLError, TimeoutError, socket.timeout, OSError) as exc:
+        raise ToolError("ARXIV_REQUEST_FAILED", f"arXiv advanced search fallback failed: {exc}") from exc
 
 
 def retry_delay_seconds(attempt: int, retry_after: str | None = None) -> float:
@@ -712,15 +768,42 @@ def handle_request(request: dict[str, Any]) -> dict[str, Any]:
     action = optional_string(request.get("action"), "action")
     options = normalize_options(optional_object(request.get("options"), "options"))
     params = build_api_params(request, options)
+    query = require_object(request.get("query"), "query") if action == "search" else {}
+    can_use_search_page = action == "search" and options["start"] == 0 and query.get("text") and not any(
+        query.get(key) for key in ("title", "author", "abstract", "raw", "submitted_from", "submitted_to")
+    )
     source = "export_api"
+    if can_use_search_page:
+        try:
+            page = fetch_arxiv_search_page(params, options)
+            parsed = parse_arxiv_search_page(
+                page,
+                options["include_abstract"],
+                options["include_pdf_url"],
+                options["max_results"],
+                search_page_categories(params),
+            )
+            source = "search_page"
+            return {
+                "ok": True,
+                "action": action,
+                "results": parsed.pop("results"),
+                "meta": {
+                    **parsed,
+                    "api_params": params,
+                    "source": source,
+                },
+            }
+        except ToolError:
+            pass
+
     try:
         feed = fetch_arxiv(params, options["timeout_seconds"])
         parsed = parse_arxiv_feed(feed, options["include_abstract"], options["include_pdf_url"])
     except ToolError:
         if action != "search":
             raise
-        source = "search_page_fallback"
-        page = fetch_arxiv_search_page(params, options)
+        page = fetch_arxiv_advanced_search_page(query, options)
         parsed = parse_arxiv_search_page(
             page,
             options["include_abstract"],
@@ -728,6 +811,7 @@ def handle_request(request: dict[str, Any]) -> dict[str, Any]:
             options["max_results"],
             search_page_categories(params),
         )
+        source = "advanced_search_page"
     return {
         "ok": True,
         "action": action,

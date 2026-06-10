@@ -1,0 +1,4 @@
+interface:
+  display_name: "Local Operator Memory"
+  short_description: "Record reusable local machine experience"
+  default_prompt: "Use $local-operator-memory to record and reuse local project, environment, and troubleshooting experience."

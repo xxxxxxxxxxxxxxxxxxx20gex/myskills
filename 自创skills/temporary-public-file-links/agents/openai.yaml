@@ -1,0 +1,3 @@
+display_name: Temporary Public File Links
+short_description: Upload local artifacts to short-lived public URLs.
+default_prompt: Upload these local files or directories to temporary public links and return the URLs.

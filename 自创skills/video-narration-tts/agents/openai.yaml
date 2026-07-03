@@ -1,0 +1,4 @@
+interface:
+  display_name: "Video Narration TTS"
+  short_description: "Rewrite and dub videos with Chinese TTS"
+  default_prompt: "Use $video-narration-tts to rewrite narration for this video, generate Chinese TTS, and produce a dubbed MP4."

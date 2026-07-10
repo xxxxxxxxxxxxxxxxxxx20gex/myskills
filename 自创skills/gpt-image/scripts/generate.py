@@ -1,28 +1,24 @@
 #!/usr/bin/env python3
-# /// script
-# requires-python = ">=3.11"
-# dependencies = [
-#     "openai>=1.55",
-#     "python-dotenv>=1.0",
-# ]
-# ///
-"""Skill launcher for the local Right Code image relay."""
+"""Generate, edit, or inpaint images with the OpenAI Images API."""
 from __future__ import annotations
 
 import argparse
 import base64
 import json
+import mimetypes
 import os
 import sys
 import time
+import urllib.error
 import urllib.request
+import uuid
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
-_RIGHT_CODES_BASE_URL = "https://www.right.codes/draw"
-_OPENAI_COMPAT_BASE_URL = f"{_RIGHT_CODES_BASE_URL}/v1"
 
-SIZE_SHORTCUTS: dict[str, str] = {
+OFFICIAL_BASE_URL = "https://api.openai.com/v1"
+SIZE_SHORTCUTS = {
     "1k": "1024x1024",
     "2k": "2048x2048",
     "4k": "3840x2160",
@@ -32,26 +28,26 @@ SIZE_SHORTCUTS: dict[str, str] = {
     "wide": "2048x1152",
     "tall": "2160x3840",
 }
+OUTPUT_FORMATS = {"png", "jpeg", "webp"}
 
 
-def _apply_right_codes_defaults() -> None:
+def load_skill_env() -> None:
+    """Load only this skill's optional .env file without replacing shell variables."""
     env_path = Path(__file__).resolve().parents[1] / ".env"
-    if env_path.is_file():
-        for line in env_path.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            key, value = line.split("=", 1)
-            os.environ.setdefault(key.strip(), value.strip().strip("'\""))
-
-    os.environ.setdefault("OPENAI_BASE_URL", _OPENAI_COMPAT_BASE_URL)
-    os.environ.setdefault("RIGHT_CODES_BASE_URL", _RIGHT_CODES_BASE_URL)
+    if not env_path.is_file():
+        return
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip("'\""))
 
 
-def _parse_direct_args() -> argparse.Namespace:
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="gpt-image",
-        description="Call the local Right Code image relay.",
+        description="Call the OpenAI-compatible Images API.",
     )
     parser.add_argument("-p", "--prompt", required=True)
     parser.add_argument("-f", "--file")
@@ -59,22 +55,31 @@ def _parse_direct_args() -> argparse.Namespace:
     parser.add_argument("-m", "--mask")
     parser.add_argument("--model", default="gpt-image-2")
     parser.add_argument("--size", default="1024x1024")
-    parser.add_argument("--quality", default=None)
+    parser.add_argument("--quality", choices=("low", "medium", "high", "auto"))
     parser.add_argument("-n", "--n", type=int, default=1)
-    parser.add_argument("--background", default=None)
-    parser.add_argument("--moderation", default=None)
-    parser.add_argument("--input-fidelity", dest="input_fidelity", default=None)
-    parser.add_argument("--format", dest="output_format", default="png")
-    parser.add_argument("--compression", dest="output_compression", default=None)
-    parser.add_argument("--user", default=None)
-    return parser.parse_args()
+    parser.add_argument("--background", choices=("auto", "opaque", "transparent"))
+    parser.add_argument("--moderation", choices=("auto", "low"))
+    parser.add_argument("--input-fidelity", dest="input_fidelity", choices=("low", "high"))
+    parser.add_argument("--format", dest="output_format", default="png", choices=OUTPUT_FORMATS)
+    parser.add_argument("--compression", dest="output_compression", type=int)
+    parser.add_argument("--user")
+    args = parser.parse_args()
+    if args.n < 1:
+        parser.error("--n must be at least 1")
+    if args.output_compression is not None and not 0 <= args.output_compression <= 100:
+        parser.error("--compression must be between 0 and 100")
+    if args.mask and not args.image:
+        parser.error("--mask requires at least one --image")
+    if args.mask and Path(args.mask).suffix.lower() != ".png":
+        parser.error("--mask must be a PNG file")
+    return args
 
 
-def _resolve_size(value: str) -> str:
+def resolve_size(value: str) -> str:
     return SIZE_SHORTCUTS.get(value.lower(), value)
 
 
-def _default_output_path(prompt: str, extension: str) -> Path:
+def default_output_path(prompt: str, extension: str) -> Path:
     target_dir = Path(__file__).resolve().parents[1] / "workspace"
     stamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     slug = "".join(ch.lower() if ch.isalnum() else "-" for ch in prompt).strip("-")
@@ -82,108 +87,149 @@ def _default_output_path(prompt: str, extension: str) -> Path:
     return target_dir / f"{stamp}-{slug}.{extension}"
 
 
-def _read_reference_images(paths_or_urls: list[str]) -> list[str]:
-    images: list[str] = []
-    for item in paths_or_urls:
-        if item.startswith(("http://", "https://", "data:")):
-            images.append(item)
-            continue
-        path = Path(item).expanduser()
-        if not path.is_file():
-            print(f"error: --image not found: {item}", file=sys.stderr)
-            sys.exit(2)
-        images.append(base64.b64encode(path.read_bytes()).decode("ascii"))
-    return images
+def api_base_url() -> str:
+    base_url = os.environ.get("OPENAI_BASE_URL", OFFICIAL_BASE_URL).rstrip("/")
+    return base_url if base_url.endswith("/v1") else f"{base_url}/v1"
 
 
-def _download_output(url: str, out_path: Path, index: int, count: int) -> Path:
-    target = out_path
-    if count > 1:
-        target = out_path.with_name(f"{out_path.stem}_{index}{out_path.suffix}")
-    target.parent.mkdir(parents=True, exist_ok=True)
+def api_key() -> str:
+    key = os.environ.get("OPENAI_API_KEY")
+    if not key:
+        raise ValueError("OPENAI_API_KEY is not set. Add it to the skill root .env file.")
+    return key
+
+
+def request_json(url: str, payload: dict[str, Any], key: str) -> dict[str, Any]:
     request = urllib.request.Request(
         url,
-        headers={
-            "User-Agent": "Mozilla/5.0 gpt-image-skill-right-codes/1.0",
-            "Accept": "image/avif,image/webp,image/png,image/jpeg,*/*",
-        },
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+        method="POST",
     )
+    return send_request(request)
+
+
+def multipart_body(fields: dict[str, Any], files: list[tuple[str, Path]]) -> tuple[bytes, str]:
+    boundary = f"----gpt-image-{uuid.uuid4().hex}"
+    chunks: list[bytes] = []
+    for name, value in fields.items():
+        if value is None:
+            continue
+        chunks.extend((
+            f"--{boundary}\r\n".encode(),
+            f'Content-Disposition: form-data; name="{name}"\r\n\r\n'.encode(),
+            str(value).encode("utf-8"),
+            b"\r\n",
+        ))
+    for name, path in files:
+        if not path.is_file():
+            raise ValueError(f"{name} file not found: {path}")
+        content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+        chunks.extend((
+            f"--{boundary}\r\n".encode(),
+            f'Content-Disposition: form-data; name="{name}"; filename="{path.name}"\r\n'.encode(),
+            f"Content-Type: {content_type}\r\n\r\n".encode(),
+            path.read_bytes(),
+            b"\r\n",
+        ))
+    chunks.append(f"--{boundary}--\r\n".encode())
+    return b"".join(chunks), boundary
+
+
+def request_multipart(url: str, fields: dict[str, Any], files: list[tuple[str, Path]], key: str) -> dict[str, Any]:
+    body, boundary = multipart_body(fields, files)
+    request = urllib.request.Request(
+        url,
+        data=body,
+        headers={
+            "Authorization": f"Bearer {key}",
+            "Content-Type": f"multipart/form-data; boundary={boundary}",
+        },
+        method="POST",
+    )
+    return send_request(request)
+
+
+def send_request(request: urllib.request.Request) -> dict[str, Any]:
+    try:
+        with urllib.request.urlopen(request, timeout=300) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")[:2000]
+        raise RuntimeError(f"API request failed ({exc.code}): {detail}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"API request failed: {exc.reason}") from exc
+
+
+def download(url: str) -> bytes:
+    request = urllib.request.Request(url, headers={"User-Agent": "gpt-image-skill/2.0"})
     last_error: Exception | None = None
-    for attempt in range(1, 4):
+    for attempt in range(3):
         try:
             with urllib.request.urlopen(request, timeout=300) as response:
-                target.write_bytes(response.read())
-            return target
+                return response.read()
         except Exception as exc:
             last_error = exc
-            if attempt < 3:
-                time.sleep(2 * attempt)
-    raise RuntimeError(last_error)
+            if attempt < 2:
+                time.sleep(2 * (attempt + 1))
+    raise RuntimeError(f"failed to download generated image: {last_error}")
 
 
-def _run_right_codes_direct() -> int:
-    """Direct Right Code generation call."""
-    args = _parse_direct_args()
-    if not os.environ.get("RIGHT_CODES_API_KEY"):
-        print("error: RIGHT_CODES_API_KEY is not set.", file=sys.stderr)
-        return 2
+def write_results(result: dict[str, Any], out_path: Path, count: int) -> list[Path]:
+    items = result.get("data") or []
+    if not items:
+        raise RuntimeError(f"API response has no image data: {result}")
+    written: list[Path] = []
+    for index, item in enumerate(items):
+        target = out_path if count == 1 else out_path.with_name(f"{out_path.stem}_{index + 1}{out_path.suffix}")
+        if item.get("b64_json"):
+            image_bytes = base64.b64decode(item["b64_json"])
+        elif item.get("url"):
+            image_bytes = download(item["url"])
+        else:
+            raise RuntimeError(f"image item has neither b64_json nor url: {item}")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(image_bytes)
+        written.append(target)
+    return written
 
-    if args.mask:
-        print(
-            "error: --mask is not supported by the baked-in Right Code fallback; "
-            "install the upstream gpt-image CLI if you need inpainting.",
-            file=sys.stderr,
-        )
-        return 2
 
-    out_path = (
-        Path(args.file).expanduser().resolve()
-        if args.file
-        else _default_output_path(args.prompt, args.output_format or "png")
-    )
-
-    headers = {
-        "Authorization": f"Bearer {os.environ['RIGHT_CODES_API_KEY']}",
-        "Content-Type": "application/json",
-    }
-    payload = {
+def optional_fields(args: argparse.Namespace) -> dict[str, Any]:
+    return {
         "model": args.model,
         "prompt": args.prompt,
-        "image": _read_reference_images(args.image),
-        "size": _resolve_size(args.size),
-        "response_format": "url",
+        "n": args.n,
+        "size": resolve_size(args.size),
+        "quality": args.quality,
+        "background": args.background,
+        "output_format": args.output_format,
+        "output_compression": args.output_compression,
+        "moderation": args.moderation,
+        "user": args.user,
     }
-
-    endpoint = f"{os.environ['RIGHT_CODES_BASE_URL'].rstrip('/')}/v1/images/generations"
-    written: list[Path] = []
-    for index in range(args.n):
-        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        request = urllib.request.Request(endpoint, data=data, headers=headers, method="POST")
-        try:
-            with urllib.request.urlopen(request, timeout=300) as response:
-                result = json.loads(response.read().decode("utf-8"))
-        except Exception as exc:
-            print(f"error: Right Code request failed: {exc}", file=sys.stderr)
-            return 1
-
-        items = result.get("data") or []
-        if not items or not items[0].get("url"):
-            print(f"error: no image URL in response: {result}", file=sys.stderr)
-            return 1
-        try:
-            written.append(_download_output(items[0]["url"], out_path, index, args.n))
-        except Exception as exc:
-            print(f"error: failed to download generated image: {exc}", file=sys.stderr)
-            return 1
-
-    for path in written:
-        print(path)
-    return 0
 
 
 def main() -> int:
-    _apply_right_codes_defaults()
-    return _run_right_codes_direct()
+    load_skill_env()
+    args = parse_args()
+    try:
+        key = api_key()
+        out_path = Path(args.file).expanduser().resolve() if args.file else default_output_path(args.prompt, args.output_format)
+        if args.image:
+            fields = optional_fields(args)
+            fields["input_fidelity"] = args.input_fidelity
+            files = [("image[]", Path(value).expanduser()) for value in args.image]
+            if args.mask:
+                files.append(("mask", Path(args.mask).expanduser()))
+            result = request_multipart(f"{api_base_url()}/images/edits", fields, files, key)
+        else:
+            result = request_json(f"{api_base_url()}/images/generations", optional_fields(args), key)
+        for path in write_results(result, out_path, args.n):
+            print(path)
+        return 0
+    except (ValueError, RuntimeError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

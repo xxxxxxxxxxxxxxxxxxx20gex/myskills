@@ -1,102 +1,75 @@
 ---
 name: gpt-image
-description: "Use this skill whenever a user asks to generate, create, draw, render, or edit images with GPT Image 2 / gpt-image-2, text-to-image, reference-image editing, inpainting, posters, typography, Chinese text, UI mockups, diagrams, or gallery prompts. Analyze the user's prompt, search the bundled Reference Gallery/craft files for matching design patterns, confer on direction when useful, then call the bundled `scripts/generate.py`. Do not write new image-generation code unless explicitly asked to modify this repo."
-compatibility: "Requires Python 3.11+ and RIGHT_CODES_API_KEY in the process environment or a local `.env` file. This local copy calls the Right Code relay at https://www.right.codes/draw directly; `gpt-image`, `uv`, and `uvx` are not required."
-metadata: {"openclaw":{"requires":{"anyBins":["python"]},"primaryEnv":"RIGHT_CODES_API_KEY","homepage":"https://github.com/wuyoscar/gpt_image_2_skill"}}
+description: "Generate, edit, or inpaint images with the OpenAI Images API. Use for text-to-image, reference-image editing, multi-reference composition, masked inpainting, posters, typography, Chinese text, UI mockups, diagrams, and gallery-based visual prompt design. Search the bundled reference gallery before calling scripts/generate.py."
 ---
 
-# gpt-image
+# GPT Image
 
-## Local Right Code Configuration
+Use the bundled CLI for OpenAI-compatible Images API calls. Do not write a replacement SDK wrapper for normal image tasks.
 
-This workstation copy is intentionally configured to use the Right Code relay directly. `scripts/generate.py` loads `RIGHT_CODES_API_KEY` from the skill root `.env` file when present, while preserving any value already set in the process environment. It also injects `OPENAI_BASE_URL=https://www.right.codes/draw/v1` and `RIGHT_CODES_BASE_URL=https://www.right.codes/draw`, then calls the direct Right Code HTTP generation path. It does not require `gpt-image`, `uv`, or `uvx`.
+## Configuration
 
-Agent runbook for GPT Image 2 generation/editing. Use the prompt library + packaged CLI. Do not reimplement image API code.
+Create a local `.env` in this skill directory from `.env_example`:
 
-## Operating loop
-
-1. **Classify request**: `generate`, `edit`, `inpaint`, or `multi-reference`; identify asset type, exact text, aspect ratio, references, safety constraints, and budget/quality.
-2. **Search references first**: open `references/gallery.md`; load/search the closest `references/gallery-<category>.md` file(s). Read actual `**Prompt**` text before choosing a pattern.
-3. **Refine with craft**: load `references/craft.md` for dense text, diagrams, UI, data visualization, multi-panel layouts, weak prompts, or no close gallery match.
-4. **Confer when useful**: before costly/ambiguous/high-polish calls, present 1–3 matched directions plus planned size/quality; ask at most one concise question. Skip long discussion for precise “generate now” requests.
-5. **Preflight, no side effects**: use existing CLI/skill if present. Check command availability (`command -v gpt-image`), installed tool lists when the tool manager exists, or the runtime’s own skill registry when available. Do not assume a local home path in cloud/hosted runtimes.
-6. **No blind setup**: do not reinstall, overwrite skill folders, create/modify `.env`, or write API keys unless the user explicitly requested setup. Global/shared installs are opt-in only.
-7. **Execute via bundled script only**: call `scripts/generate.py`. Do not create a new `generate.py`, SDK wrapper, or ad-hoc script for normal image requests.
-8. **Report**: output file path(s), key flags, and one concise refinement suggestion if useful.
-
-Fast path: precise prompt + explicit “generate now” → quick reference/craft check, then CLI.
-
-## CLI resolution
-
-Preferred call:
-
-```bash
-python "$SKILL_DIR/scripts/generate.py" -p "PROMPT" [-f OUT] [-i REF...] [-m MASK] [options]
+```dotenv
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_API_KEY=your-api-key
 ```
 
-`scripts/generate.py` calls the local Right Code relay directly. Do not route through `gpt-image`, `uv`, or `uvx` for this workstation copy.
+- `OPENAI_BASE_URL` defaults to `https://api.openai.com/v1`. It may point to an OpenAI-compatible gateway; the CLI normalizes a missing `/v1` suffix.
+- `OPENAI_API_KEY` is required. The process environment takes precedence over `.env`.
+- Never print, commit, or modify a real key. Do not read global Codex configuration during normal use.
 
-## Key and cost rules
+## Workflow
 
-- The script reads `RIGHT_CODES_API_KEY` from the process environment first, then from the skill root `.env` file. Do not commit real keys.
-- If host/runtime has native platform-managed image generation and the user wants that path, use the host tool instead of this CLI.
-- If `RIGHT_CODES_API_KEY` is unset, report the missing key or use host-native generation when requested; do not write secrets.
-- Never print secret values.
+1. Classify the request as `generate`, `edit`, or `inpaint`; capture exact text, canvas, references, masks, and quality.
+2. Read `references/gallery.md`, then load the closest one to three category files. Read `references/craft.md` for dense text, diagrams, UI, multi-panel layouts, or edits.
+3. For an ambiguous, costly, or high-polish request, offer up to three directions and ask one concise question. For a precise “generate now” request, proceed.
+4. Confirm output path and that every reference image and mask exists. A mask must be PNG and requires an input image.
+5. Call `scripts/generate.py`, then report the produced path(s) and surface errors without secrets.
 
-## Flags
+## CLI
 
-| Flag | Values | Use |
+```bash
+python "$SKILL_DIR/scripts/generate.py" -p "PROMPT" [-f OUTPUT] [-i IMAGE ...] [-m MASK] [options]
+```
+
+Routing is automatic:
+
+| Mode | Invocation | Official route |
 |---|---|---|
-| `-p, --prompt` | string | Required prompt/edit instruction |
-| `-f, --file` | path | Output path; auto-named if omitted |
-| `-i, --image` | repeatable path | Use edits endpoint; supports multiple references |
-| `-m, --mask` | PNG path | Inpaint with alpha mask; requires `-i` |
-| `--model` | default `gpt-image-2` | Image model |
-| `--size` | `1k`, `2k`, `4k`, `portrait`, `landscape`, `square`, `wide`, `tall`, or literal | Canvas size |
-| `--quality` | `low`, `medium`, `high`, `auto` | Cost/quality dial |
-| `-n, --n` | integer | Number of images |
-| `--background` | `auto`, `opaque` | Generation background |
-| `--moderation` | `auto`, `low` | Generation moderation setting |
-| `--format` | `png`, `jpeg`, `webp` | Output encoding |
-| `--compression` | `0-100` | JPEG/WebP compression |
-| `--user` | string | Optional end-user identifier |
+| Text-to-image | no `-i` | `POST /v1/images/generations` JSON |
+| Reference edit | one or more `-i` | `POST /v1/images/edits` multipart |
+| Inpaint | `-i` and `-m` | `POST /v1/images/edits` multipart with PNG mask |
 
-Quality policy:
-- `low`: cheap drafts, broad exploration, many variants.
-- `medium`: normal exploration, style probing, balanced cost.
-- `high`: final assets, Chinese text, posters, diagrams, UI, paper figures, dense labels.
+`-i` accepts local image paths. Repeating it sends multiple reference images to the edits endpoint. URLs are intentionally not accepted because the official edit API requires uploaded image files.
 
-Size policy:
-- default/social square: `1k` / `1024x1024`
-- poster/mobile/beauty: `portrait`
-- landscape/gameplay/photo: `landscape`
-- print/paper figure: `2k`
-- widescreen hero: `4k`
-- vertical story/banner: `tall`
+## Options
 
-## Endpoint routing
+| Flag | Purpose |
+|---|---|
+| `-p`, `--prompt` | Required generation or edit instruction |
+| `-f`, `--file` | Output path; an auto-named file is used when omitted |
+| `-i`, `--image` | Repeatable local reference image |
+| `-m`, `--mask` | PNG transparency mask for inpainting |
+| `--model` | Defaults to `gpt-image-2`; override for a supported image model |
+| `--size` | `1k`, `2k`, `4k`, `portrait`, `landscape`, `square`, `wide`, `tall`, or a literal size |
+| `--quality` | `low`, `medium`, `high`, or `auto` |
+| `-n` | Number of images |
+| `--background` | `auto`, `opaque`, or `transparent` |
+| `--moderation` | `auto` or `low` |
+| `--input-fidelity` | `low` or `high`; applies to edits |
+| `--format` | `png`, `jpeg`, or `webp` |
+| `--compression` | JPEG/WebP compression from 0 to 100 |
+| `--user` | Optional end-user identifier |
 
-| Mode | Trigger | Endpoint |
-|---|---|---|
-| Text-to-image | no `-i` | `/v1/images/generations` |
-| Reference edit | one or more `-i` | `/v1/images/edits` |
-| Inpaint | `-i` + `-m` | `/v1/images/edits` with mask |
+Use `medium` for exploration and `high` for final assets, dense Chinese typography, diagrams, UI, or paper figures. Use `portrait` for posters, `landscape` for photos and game scenes, `2k` for print-like figures, and `4k` for widescreen heroes.
 
-Surface API errors verbatim enough for debugging; exit codes: `0` success, `1` API/refusal, `2` bad args/missing key.
+## Reference Loading
 
-## Reference loading
+- `references/gallery.md`: routing index for 162 collected prompts. Always load first.
+- `references/gallery-*.md`: concrete category prompts. Load only the smallest useful slice.
+- `references/craft.md`: prompt construction rules for exact text, diagrams, UI, edit invariants, and complex layouts.
+- `references/openai-cookbook.md`: model/API examples; consult for API-semantics questions.
 
-- `references/gallery.md`: routing index for the 162-prompt Reference Gallery Atlas. Load first.
-- `references/gallery-*.md`: concrete prompts, previews, paths, metadata, attribution. Load 1 category for normal requests; 2–3 for hybrids.
-- `references/craft.md`: prompt-craft checklist. Load for prompt repair, exact text, UI/data/diagram grammar, edit invariants, and multi-panel consistency.
-- `references/openai-cookbook.md`: official parameter/model semantics. Load for API behavior or model capability questions.
-
-Reference loading policy: load the smallest useful slice; never load all category files by default.
-
-## Verification
-
-- Before API call: confirm endpoint mode, size, quality, output path, and required reference/mask files.
-- After CLI call: report path(s) printed by the CLI and surface stderr on failure.
-- For edits/inpaints: verify `-i` paths exist; verify `-m` exists when used.
-
-Preserve `Curated` vs `Author + Source` metadata when adapting examples. Add new collected prompts to the Reference Gallery before README promotion.
+Preserve `Curated` and `Author + Source` attribution metadata when adapting gallery examples.

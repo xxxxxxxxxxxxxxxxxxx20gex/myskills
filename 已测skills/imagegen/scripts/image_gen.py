@@ -19,6 +19,8 @@ import re
 import sys
 import time
 from typing import Any, Dict, Iterable, List, Optional, Tuple
+from urllib.parse import urlparse
+from urllib.request import urlopen
 
 from io import BytesIO
 
@@ -362,7 +364,7 @@ def _downscale_image_bytes(image_bytes: bytes, *, max_dim: int, output_format: s
 
 
 def _decode_write_and_downscale(
-    images: List[str],
+    images: List[Any],
     outputs: List[Path],
     *,
     force: bool,
@@ -370,7 +372,7 @@ def _decode_write_and_downscale(
     downscale_suffix: str,
     output_format: str,
 ) -> None:
-    for idx, image_b64 in enumerate(images):
+    for idx, image in enumerate(images):
         if idx >= len(outputs):
             break
         out_path = outputs[idx]
@@ -378,7 +380,15 @@ def _decode_write_and_downscale(
             _die(f"Output already exists: {out_path} (use --force to overwrite)")
         out_path.parent.mkdir(parents=True, exist_ok=True)
 
-        raw = base64.b64decode(image_b64)
+        if image.b64_json:
+            raw = base64.b64decode(image.b64_json)
+        elif image.url:
+            if urlparse(image.url).scheme not in {"http", "https"}:
+                _die(f"Unsupported image URL: {image.url}")
+            with urlopen(image.url, timeout=120) as response:
+                raw = response.read()
+        else:
+            _die("Image API response contains neither b64_json nor url.")
         out_path.write_bytes(raw)
         print(f"Wrote {out_path}")
 
@@ -399,7 +409,10 @@ def _create_client():
         from openai import OpenAI
     except ImportError:
         _die(f"openai SDK not installed in the active environment. {_dependency_hint('openai')}")
-    return OpenAI()
+    options = {"api_key": os.environ["OPENAI_API_KEY"]}
+    if base_url := os.getenv("OPENAI_BASE_URL"):
+        options["base_url"] = base_url
+    return OpenAI(**options)
 
 
 def _create_async_client():
@@ -416,7 +429,10 @@ def _create_async_client():
             "AsyncOpenAI not available in this openai SDK version. "
             f"{_dependency_hint('openai', upgrade=True)}"
         )
-    return AsyncOpenAI()
+    options = {"api_key": os.environ["OPENAI_API_KEY"]}
+    if base_url := os.getenv("OPENAI_BASE_URL"):
+        options["base_url"] = base_url
+    return AsyncOpenAI(**options)
 
 
 def _slugify(value: str) -> str:
@@ -671,9 +687,8 @@ async def _run_generate_batch(args: argparse.Namespace) -> int:
                 )
                 elapsed = time.time() - started
                 print(f"{job_label} completed in {elapsed:.1f}s", file=sys.stderr)
-            images = [item.b64_json for item in result.data]
             _decode_write_and_downscale(
-                images,
+                result.data,
                 outputs,
                 force=args.force,
                 downscale_max_dim=args.downscale_max_dim,
@@ -753,9 +768,8 @@ def _generate(args: argparse.Namespace) -> None:
     elapsed = time.time() - started
     print(f"Generation completed in {elapsed:.1f}s.", file=sys.stderr)
 
-    images = [item.b64_json for item in result.data]
     _decode_write_and_downscale(
-        images,
+        result.data,
         output_paths,
         force=args.force,
         downscale_max_dim=args.downscale_max_dim,
@@ -832,9 +846,8 @@ def _edit(args: argparse.Namespace) -> None:
 
     elapsed = time.time() - started
     print(f"Edit completed in {elapsed:.1f}s.", file=sys.stderr)
-    images = [item.b64_json for item in result.data]
     _decode_write_and_downscale(
-        images,
+        result.data,
         output_paths,
         force=args.force,
         downscale_max_dim=args.downscale_max_dim,

@@ -1,4 +1,4 @@
 interface:
   display_name: "MinerU to Markdown"
-  short_description: "Convert documents to Markdown with MinerU API"
+  short_description: "Convert documents to Markdown with or without a MinerU token"
   default_prompt: "Convert this document to Markdown with MinerU."

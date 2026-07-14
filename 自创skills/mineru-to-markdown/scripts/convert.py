@@ -266,6 +266,23 @@ def resolve_mode(args):
     return "agent"
 
 
+def should_fallback_to_agent(exc, source, mode):
+    """Allow only service/upload failures to use the degraded Agent fallback."""
+    if mode != "precision" or is_url(source):
+        return False
+    message = str(exc).lower()
+    markers = (
+        "signaturedoesnotmatch",
+        "upload failed with http 5",
+        "http 500",
+        "http 502",
+        "http 503",
+        "http 504",
+        "upload failed",
+    )
+    return any(marker in message for marker in markers)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Convert a document to Markdown with MinerU API.")
     parser.add_argument("source", help="Local file path or HTTP(S) URL")
@@ -288,11 +305,24 @@ def main():
 
     mode = resolve_mode(args)
     print(f"mode={mode}", file=sys.stderr)
-    markdown, base_url, assets = parse_precision(args.source, args) if mode == "precision" else parse_agent(args.source, args)
+    fallback_used = False
+    try:
+        markdown, base_url, assets = parse_precision(args.source, args) if mode == "precision" else parse_agent(args.source, args)
+    except Exception as exc:
+        if not should_fallback_to_agent(exc, args.source, mode):
+            raise
+        fallback_used = True
+        print("precision_failed=true", file=sys.stderr)
+        print(f"precision_failure_reason={exc}", file=sys.stderr)
+        print("FLASH_FALLBACK_USED=true", file=sys.stderr)
+        print("WARNING: Precision mode failed during service/upload; using degraded Agent Lightweight fallback. Tables, formulas, OCR, and complex layout may be less accurate.", file=sys.stderr)
+        markdown, base_url, assets = parse_agent(args.source, args)
     out_path = Path(args.out) if args.out else default_output_path(args.source)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(markdown, encoding="utf-8")
     write_assets(markdown, out_path.parent, base_url, assets)
+    if fallback_used:
+        print("NOTICE: flash/Agent fallback was used; tell the user the result is degraded and report asset status.", file=sys.stderr)
     print(out_path)
 
 

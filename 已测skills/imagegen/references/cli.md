@@ -12,6 +12,22 @@ The word `batch` in a user request is not CLI opt-in by itself.
 
 Real API calls require **network access** + `OPENAI_API_KEY`. `--dry-run` does not.
 
+The CLI reads connection settings from the current process environment before creating the API client:
+
+- `OPENAI_API_KEY` (required): API key for the selected provider or route.
+- `OPENAI_BASE_URL` (optional): OpenAI-compatible API base URL, for example `https://example.com/v1`. If omitted, the OpenAI SDK default is used.
+
+On Windows, user- or system-level environment variables are inherited by newly opened PowerShell and Codex processes. Restart the terminal or Codex after changing them. For the current PowerShell session only:
+
+```powershell
+$env:OPENAI_API_KEY = "your-api-key"
+$env:OPENAI_BASE_URL = "https://example.com/v1"
+```
+
+The CLI does not load `.env` files automatically.
+
+Image responses may contain either `b64_json` or an `http`/`https` `url`. The CLI writes base64 responses directly and downloads URL responses without forwarding `OPENAI_API_KEY` to the image host.
+
 ## Quick start (works from any repo)
 Set a stable path to the skill CLI (default `CODEX_HOME` is `~/.codex`):
 

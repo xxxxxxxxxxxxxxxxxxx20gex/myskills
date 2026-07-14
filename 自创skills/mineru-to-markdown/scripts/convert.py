@@ -231,6 +231,13 @@ def write_assets(markdown, out_dir, base_url=None, assets=None):
         return
     refs = set(re.findall(r"!\[[^\]]*\]\((images/[^)]+)\)", markdown))
     refs.update(re.findall(r"<img[^>]+src=[\"'](images/[^\"']+)[\"']", markdown, flags=re.I))
+    placeholders = len(re.findall(r"<!--\s*image\s*-->", markdown, flags=re.I))
+    if placeholders and not refs:
+        print(
+            f"images_unavailable={placeholders}: Agent Lightweight returned image placeholders without image URLs; "
+            "use Precision mode with MINERU_API_TOKEN for image assets",
+            file=sys.stderr,
+        )
     for ref in refs:
         target = out_dir / urllib.parse.unquote(ref)
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -327,4 +334,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (OSError, RuntimeError, TimeoutError, urllib.error.URLError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        sys.exit(1)

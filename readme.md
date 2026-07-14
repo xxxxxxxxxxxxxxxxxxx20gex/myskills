@@ -12,6 +12,8 @@ gpt-image：调用 Right Code relay 生成或编辑 GPT Image 2 图片，支持�
 
 mineru-to-markdown：调用 MinerU API 将 PDF、Office 文档、图片、HTML 或 URL 转换为 Markdown，并保存配套图片资源。
 
+dashiai-ppt：根据汇报目标和内容组合可离线打开、可编辑、可导出的 HTML/PPTX 演示文稿，内置 12 套视觉主题和完整的预览、导出工作流。
+
 html-ppt-build：用 HTML/CSS 构建高密度中文技术 PPT 页面，并导出高清图片式 PPTX。
 
 ppt-technical-redesign：将普通 PPT 或页面内容重构为专业、高信息密度的技术汇报页。

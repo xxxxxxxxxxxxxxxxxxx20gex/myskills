@@ -1,23 +1,38 @@
-# 自创skills
+# 我的 Codex Skills
 
-arxiv-search：查询 arXiv 论文，支持最新预印本、精确 arXiv ID、PDF 链接、分类和日期过滤。
+个人维护的 Codex skills 仓库。打开 [skills-showcase.html](skills-showcase.html) 可按维护状态浏览全部 skill，并点击卡片查看功能、文档章节和目录位置。
 
-douyin-video-downloader：下载公开抖音链接内容，保存视频、封面、图文素材、页面 HTML 和元数据。
+## 目录状态
 
-semantic-scholar-search：查询 Semantic Scholar Academic Graph，支持论文搜索、论文详情、引用/参考文献、作者和开放获取 PDF 信息。
+| 目录 | 数量 | 含义 |
+|---|---:|---|
+| `自创skills/` | 11 | 自主创建和定制，按自己的工作环境维护 |
+| `已测skills/` | 7 | 已经过实际使用或验证，可优先复用 |
+| `待测skills/` | 20 | 已收集，尚需验证依赖、兼容性或实际效果 |
 
-xiaohongshu-note-downloader：下载公开小红书笔记内容，保存图片、视频、页面 HTML、来源链接和元数据。
+## 自创 Skills
 
-gpt-image：调用 Right Code relay 生成或编辑 GPT Image 2 图片，支持文生图、参考图编辑、局部重绘和提示词参考库。
+- `arxiv-search`：检索 arXiv 论文、预印本、精确 ID 和 PDF 链接。
+- `douyin-video-downloader`：归档公开抖音视频、封面、图文和元数据。
+- `gpt-image`：通过 OpenAI-compatible Images API 生成、编辑和局部重绘图片。
+- `html-ppt-build`：将报告或 Markdown 制作成中文 HTML 技术 PPT，并导出 PPTX。
+- `local-credential-memory`：本地管理账号、密码、API key、SSH 和数据库凭据。
+- `mineru-to-markdown`：将 PDF、Office、图片或网页转换为 Markdown。
+- `ppt-technical-redesign`：重构普通 PPT 的技术叙事、内容结构和视觉表达。
+- `semantic-scholar-search`：检索 Semantic Scholar 论文、作者、引用和参考文献。
+- `temporary-public-file-links`：为本地文件或目录创建临时公开链接。
+- `video-narration-tts`：根据视频画面改写旁白、生成中文 TTS 并合成 MP4。
+- `xiaohongshu-note-downloader`：归档公开小红书图文、视频和来源信息。
 
-mineru-to-markdown：调用 MinerU API 将 PDF、Office 文档、图片、HTML 或 URL 转换为 Markdown，并保存配套图片资源。
+## 已测 Skills
 
-dashiai-ppt：根据汇报目标和内容组合可离线打开、可编辑、可导出的 HTML/PPTX 演示文稿，内置 12 套视觉主题和完整的预览、导出工作流。
+`codex-ppt-skill`、`dashiai-ppt`、`imagegen`、`openai-docs`、`professor-synapse`、`skill-creator`、`skill-installer`
 
-html-ppt-build：用 HTML/CSS 构建高密度中文技术 PPT 页面，并导出高清图片式 PPTX。
+## 待测 Skills
 
-ppt-technical-redesign：将普通 PPT 或页面内容重构为专业、高信息密度的技术汇报页。
+`canvas-design`、`create-plan`、`develop-web-game`、`docx`、`films-search`、`frontend-design`、`frontend-slides`、`imap-smtp-email`、`local-tools`、`music-search`、`pdf`、`playwright`、`pptx`、`remotion`、`scheduled-task`、`seedance`、`seedream`、`technology-news-search`、`web-search`、`xlsx`
 
-local-operator-memory：记录和复用本机操作经验、项目上下文、故障修复和用户偏好。
+## 安全约定
 
-temporary-public-file-links：将本地文件或目录上传为临时公开链接，用于分享截图、报告、压缩包或生成物。
+- `.env`、证书、私钥和 `secrets.*` 已被 Git 忽略；只提交脱敏的示例配置。
+- 不将真实凭据写入 skill 文档、脚本、README、展示页或 Git 历史。

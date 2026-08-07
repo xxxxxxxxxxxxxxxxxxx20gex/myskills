@@ -4,80 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>自创 Skills · 功能导航</title>
-  <style>
-    :root { --ink:#172033; --muted:#65708a; --paper:#f6f8fc; --line:#e4e8f1; --card:#ffffff; --blue:#3967e8; --purple:#7859d9; --green:#129878; --orange:#dd7a25; --shadow:0 14px 32px rgba(25, 39, 74, .08); }
-    * { box-sizing:border-box; }
-    body { margin:0; color:var(--ink); background:radial-gradient(circle at 0 0, #eaf1ff 0, transparent 31rem), var(--paper); font:15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
-    .wrap { width:min(1180px, calc(100% - 40px)); margin:auto; }
-    header { padding:66px 0 44px; }
-    .eyebrow { margin:0 0 12px; color:var(--blue); font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
-    h1 { margin:0; font-size:clamp(34px, 5vw, 56px); letter-spacing:-.05em; line-height:1.05; }
-    .lead { max-width:690px; margin:18px 0 0; color:var(--muted); font-size:18px; }
-    .summary { display:flex; flex-wrap:wrap; gap:10px; margin-top:28px; }
-    .pill { padding:7px 12px; border:1px solid var(--line); border-radius:999px; color:var(--muted); background:rgba(255,255,255,.72); font-size:13px; }
-    .tabs { display:flex; flex-wrap:wrap; gap:9px; margin:2px 0 26px; padding:7px; border:1px solid var(--line); border-radius:15px; background:rgba(255,255,255,.78); box-shadow:var(--shadow); }
-    .tab { appearance:none; padding:9px 15px; border:0; border-radius:10px; color:var(--muted); background:transparent; font:inherit; font-weight:650; cursor:pointer; transition:background .18s ease,color .18s ease,transform .18s ease; }
-    .tab:hover { color:var(--ink); background:#eef2fb; }
-    .tab:active { transform:translateY(1px); }
-    .tab[aria-selected="true"] { color:#fff; background:var(--ink); }
-    .tab:focus-visible, .card:focus-visible, .close:focus-visible { outline:3px solid rgba(57,103,232,.25); outline-offset:2px; }
-    section { padding:10px 0 32px; }
-    section[hidden] { display:none; }
-    .section-head { display:flex; align-items:baseline; gap:12px; margin:20px 0 15px; }
-    h2 { margin:0; font-size:21px; letter-spacing:-.025em; }
-    .section-head span { color:var(--muted); font-size:13px; }
-    .grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px; }
-    .card { display:flex; width:100%; flex-direction:column; min-height:280px; padding:22px; border:1px solid var(--line); border-radius:18px; color:inherit; background:var(--card); box-shadow:var(--shadow); text-align:left; font:inherit; cursor:pointer; transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease; }
-    .card:hover { transform:translateY(-3px); border-color:#cad4e8; box-shadow:0 18px 38px rgba(25,39,74,.13); }
-    .card-top { display:flex; align-items:flex-start; gap:12px; }
-    .icon { display:grid; flex:0 0 42px; width:42px; height:42px; place-items:center; border-radius:13px; color:#fff; font-size:20px; }
-    .blue { background:linear-gradient(135deg,#4f83ff,#3655cf); } .purple { background:linear-gradient(135deg,#a37cf1,#6647bf); } .green { background:linear-gradient(135deg,#2abb9d,#087f68); } .orange { background:linear-gradient(135deg,#efab4e,#c66315); }
-    h3 { margin:0; font-size:17px; line-height:1.35; letter-spacing:-.015em; }
-    .slug { margin:2px 0 0; color:var(--muted); font:12px ui-monospace, SFMono-Regular, Consolas, monospace; }
-    .desc { margin:18px 0 14px; color:#3e4a63; }
-    .flow { margin-top:auto; padding:12px; border-radius:12px; background:#f7f9fd; color:var(--muted); font-size:13px; }
-    .flow strong { color:var(--ink); font-weight:650; }
-    .arrow { padding:0 4px; color:var(--blue); font-weight:700; }
-    .more { display:flex; align-items:center; justify-content:space-between; margin-top:13px; color:var(--blue); font-size:13px; font-weight:700; }
-    .status-label { display:inline-flex; width:max-content; margin:13px 0 -4px; padding:4px 9px; border-radius:999px; font-size:11px; font-weight:750; }
-    .status-label.tested { color:#08745f; background:#e4f7f1; }
-    .status-label.pending { color:#a65410; background:#fff0df; }
-    .repo-card .desc { display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:4; }
-    dialog { width:min(700px, calc(100% - 28px)); max-height:min(86vh, 760px); padding:0; border:0; border-radius:22px; color:var(--ink); background:var(--card); box-shadow:0 30px 90px rgba(15,26,54,.3); }
-    dialog::backdrop { background:rgba(14,23,43,.56); backdrop-filter:blur(5px); }
-    .dialog-inner { padding:28px; }
-    .dialog-head { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
-    .dialog-title { display:flex; align-items:center; gap:13px; }
-    .dialog-title h2 { font-size:23px; }
-    .dialog-slug { margin:2px 0 0; color:var(--muted); font:12px ui-monospace,SFMono-Regular,Consolas,monospace; }
-    .close { display:grid; flex:0 0 36px; width:36px; height:36px; place-items:center; border:1px solid var(--line); border-radius:10px; color:var(--muted); background:#fff; font-size:20px; cursor:pointer; }
-    .detail-summary { margin:22px 0; color:#3e4a63; font-size:16px; }
-    .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-    .detail-block { padding:16px; border-radius:14px; background:#f6f8fc; }
-    .detail-block h3 { margin-bottom:8px; font-size:14px; }
-    .detail-block ul { margin:0; padding-left:19px; color:#4a5670; }
-    .detail-block li + li { margin-top:5px; }
-    .detail-wide { grid-column:1 / -1; }
-    .path { margin:0; overflow-wrap:anywhere; color:#4a5670; font:12px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace; }
-    footer { padding:28px 0 45px; color:var(--muted); font-size:13px; }
-    @media (max-width:900px) { .grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
-    @media (max-width:600px) { .wrap { width:min(100% - 28px, 1180px); } header { padding-top:42px; } .grid,.detail-grid { grid-template-columns:1fr; } .detail-wide { grid-column:auto; } .card { min-height:0; } .tabs { padding:6px; } .tab { flex:1 1 calc(50% - 9px); padding-inline:8px; } .dialog-inner { padding:21px; } }
-  </style>
+  <link rel="stylesheet" href="/playground/static/styles.css">
 </head>
 <body>
-  <header class="wrap">
-    <p class="eyebrow">Codex workflow library</p>
-    <h1>自创 Skills<br>一眼看懂能做什么</h1>
-    <p class="lead">从论文检索、文档转换到视频配音、图片生成与本地凭据管理。按分类筛选，点击任意卡片可查看完整能力、典型场景和产出。</p>
-    <div class="summary"><span class="pill">38 个 skills</span><span class="pill">自创 11 · 已测 7 · 待测 20</span><span class="pill">本地优先 · 凭据不入库</span></div>
-  </header>
-
-  <main class="wrap">
+  <div class="app-shell">
+  <main class="catalog">
     <nav class="tabs" role="tablist" aria-label="技能分类">
       <button class="tab" type="button" role="tab" aria-selected="true" data-filter="all">全部 38</button>
       <button class="tab" type="button" role="tab" aria-selected="false" data-filter="self">自创 11</button>
       <button class="tab" type="button" role="tab" aria-selected="false" data-filter="tested">已测 7</button>
       <button class="tab" type="button" role="tab" aria-selected="false" data-filter="pending">待测 20</button>
+      <div class="tab-tools">
+        <label for="rating-filter">评分</label>
+        <select id="rating-filter" class="rating-filter">
+          <option value="all">全部</option>
+          <option value="unrated">未评分</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+        </select>
+        <button id="open-rating-settings" class="toolbar-button" type="button">等级设置</button>
+        <button id="open-git-panel" class="toolbar-button primary" type="button">项目管理</button>
+      </div>
     </nav>
 
     <section data-status-section="self">
@@ -110,7 +58,7 @@
     <section data-status-section="self">
       <div class="section-head"><h2>自创 · 本地工具</h2><span>安全地复用凭据，或便捷地分享本地交付物</span></div>
       <div class="grid">
-        <button type="button" class="card" data-skill="local-credential-memory"><div class="card-top"><div class="icon blue">⌑</div><div><h3>Local Credential Memory</h3><p class="slug">local-credential-memory</p></div></div><p class="desc">在单一本地凭据文件中维护账号、密码、API key、SSH 和数据库连接；不会把敏感值写进 Git。</p><div class="flow"><strong>凭据名称 / 授权任务</strong><span class="arrow">→</span>本地最小读取<span class="arrow">→</span><strong>安全使用或更新</strong></div><span class="more">查看详细信息 <span>→</span></span></button>
+        <button type="button" class="card" data-skill="local-credential-memory"><div class="card-top"><div class="icon blue">⌑</div><div><h3>Local Credential Memory</h3><p class="slug">local-credential-memory</p></div></div><p class="desc">在单一本地凭据文件中维护账号、密码、API key、SSH 和数据库连接；经授权可从 Codex 等本机配置发现并导入。</p><div class="flow"><strong>凭据 / 授权配置源</strong><span class="arrow">→</span>发现并持久化<span class="arrow">→</span><strong>当前及后续安全复用</strong></div><span class="more">查看详细信息 <span>→</span></span></button>
         <button type="button" class="card" data-skill="temporary-public-file-links"><div class="card-top"><div class="icon blue">↗</div><div><h3>Temporary Public File Links</h3><p class="slug">temporary-public-file-links</p></div></div><p class="desc">为本地截图、报告、压缩包或生成媒体创建短期公开链接，解决附件不可见或不便分享的问题。</p><div class="flow"><strong>本地文件 / 目录</strong><span class="arrow">→</span>临时上传<span class="arrow">→</span><strong>可访问分享链接</strong></div><span class="more">查看详细信息 <span>→</span></span></button>
       </div>
     </section>
@@ -126,126 +74,105 @@
     </section>
   </main>
 
+  <button id="panel-resizer" class="panel-resizer" type="button" role="separator" aria-label="调整对话栏宽度" aria-orientation="vertical" title="拖动调整宽度，双击恢复默认"></button>
+
+  <aside class="chat-panel" aria-label="Skill 对话">
+    <div class="chat-head">
+      <div><h2>Skill 对话</h2><p>由本机 Codex CLI 使用完整工具执行</p></div>
+      <button id="new-chat" class="new-chat" type="button">新对话</button>
+    </div>
+    <div class="chat-controls">
+      <div class="field"><label for="runner-skill">Skill</label><select id="runner-skill"></select></div>
+      <div class="field"><label for="runner-model">模型</label><select id="runner-model"></select></div>
+    </div>
+    <div class="runner-status chat-status"><span id="runner-status-dot" class="status-dot"></span><span id="runner-status-text">正在连接本地执行服务……</span></div>
+    <div id="chat-messages" class="chat-messages">
+      <div id="chat-empty" class="chat-empty"><strong>开始一个 Skill 对话</strong><span>选择 Skill 后输入任务，回答和产物会显示在这里。</span></div>
+    </div>
+    <details id="log-box" class="chat-log-details" hidden><summary>查看本次运行日志</summary><pre id="run-logs" class="run-logs"></pre></details>
+    <div class="chat-composer">
+      <textarea id="runner-prompt" aria-label="对话内容" placeholder="输入任务，Enter 发送，Shift + Enter 换行……"></textarea>
+      <div class="composer-actions">
+        <p class="runner-note">网页仅负责收发；工具与环境由本机 Codex 执行，产物保存到 .runs。</p>
+        <button id="run-button" class="run-button" type="button">发送</button>
+      </div>
+    </div>
+  </aside>
+  </div>
+
   <dialog id="skill-dialog" aria-labelledby="dialog-name">
     <div class="dialog-inner">
       <div class="dialog-head">
         <div class="dialog-title"><div id="dialog-icon" class="icon blue">✦</div><div><h2 id="dialog-name"></h2><p id="dialog-slug" class="dialog-slug"></p></div></div>
-        <button id="dialog-close" class="close" type="button" aria-label="关闭">×</button>
+        <div class="dialog-actions">
+          <button id="dialog-run-shortcut" class="dialog-run-shortcut" type="button">立即运行</button>
+          <button id="dialog-close" class="close" type="button" aria-label="关闭">×</button>
+        </div>
       </div>
-      <p id="dialog-summary" class="detail-summary"></p>
-      <div class="detail-grid">
-        <div class="detail-block"><h3>核心能力</h3><ul id="dialog-capabilities"></ul></div>
-        <div class="detail-block"><h3>典型请求</h3><ul id="dialog-examples"></ul></div>
-        <div class="detail-block"><h3>主要产出</h3><ul id="dialog-outputs"></ul></div>
-        <div class="detail-block"><h3>依赖与边界</h3><ul id="dialog-notes"></ul></div>
-        <div class="detail-block detail-wide"><h3>Skill 位置</h3><p id="dialog-path" class="path"></p></div>
+      <div id="detail-panel">
+        <p id="dialog-summary" class="detail-summary"></p>
+        <div class="detail-grid">
+          <div class="detail-block"><h3>核心能力</h3><ul id="dialog-capabilities"></ul></div>
+          <div class="detail-block"><h3>典型请求</h3><ul id="dialog-examples"></ul></div>
+          <div class="detail-block"><h3>主要产出</h3><ul id="dialog-outputs"></ul></div>
+          <div class="detail-block"><h3>依赖与边界</h3><ul id="dialog-notes"></ul></div>
+          <div class="detail-block detail-wide"><h3>Skill 位置</h3><p id="dialog-path" class="path"></p></div>
+          <div class="detail-block detail-wide detail-rating">
+            <h3>我的评分</h3>
+            <div class="rating-editor">
+              <label>等级<select id="skill-rating"><option value="">未评分</option></select></label>
+              <label>备注<textarea id="skill-rating-note" maxlength="300" placeholder="记录实际效果、限制或后续优化方向"></textarea></label>
+              <button id="save-skill-rating" class="run-button" type="button">保存评分</button>
+            </div>
+            <p id="rating-feedback" class="inline-feedback" aria-live="polite"></p>
+          </div>
+        </div>
       </div>
     </div>
   </dialog>
+  <dialog id="rating-dialog" aria-labelledby="rating-dialog-title">
+    <div class="dialog-inner">
+      <div class="dialog-head"><div><h2 id="rating-dialog-title">评分等级设置</h2><p class="dialog-slug">等级固定为 A / B / C，显示名称、说明和颜色可自定义</p></div><button id="rating-dialog-close" class="close" type="button" aria-label="关闭">×</button></div>
+      <div class="rating-level-grid">
+        <div class="rating-level-head"><strong>等级</strong><strong>显示名称</strong><strong>说明</strong><strong>颜色</strong></div>
+        <div class="rating-level-row"><strong>A</strong><input id="rating-A-name" maxlength="20"><input id="rating-A-description" maxlength="120"><input id="rating-A-color" type="color"></div>
+        <div class="rating-level-row"><strong>B</strong><input id="rating-B-name" maxlength="20"><input id="rating-B-description" maxlength="120"><input id="rating-B-color" type="color"></div>
+        <div class="rating-level-row"><strong>C</strong><input id="rating-C-name" maxlength="20"><input id="rating-C-description" maxlength="120"><input id="rating-C-color" type="color"></div>
+      </div>
+      <div class="dialog-footer"><p id="rating-settings-feedback" class="inline-feedback" aria-live="polite"></p><button id="save-rating-settings" class="run-button" type="button">保存设置</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="git-dialog" class="git-dialog" aria-labelledby="git-dialog-title">
+    <div class="dialog-inner">
+      <div class="dialog-head"><div><h2 id="git-dialog-title">项目版本管理</h2><p id="git-remote" class="dialog-slug"></p></div><button id="git-dialog-close" class="close" type="button" aria-label="关闭">×</button></div>
+      <div id="git-summary" class="git-summary"></div>
+      <div class="git-proxy-settings">
+        <label for="git-proxy-port">Git 代理</label>
+        <span>http://127.0.0.1:</span>
+        <input id="git-proxy-port" type="number" min="0" max="65535" step="1" inputmode="numeric" aria-describedby="git-proxy-help">
+        <button id="git-save-proxy" class="toolbar-button" type="button">保存代理</button>
+        <small id="git-proxy-help">填写 0 可关闭；仅影响此 Playground 的 fetch、pull 和 push。</small>
+      </div>
+      <div class="git-toolbar">
+        <button id="git-refresh" class="toolbar-button" type="button">刷新状态</button>
+        <button id="git-fetch" class="toolbar-button" type="button">检查远程更新</button>
+        <button id="git-pull" class="toolbar-button" type="button">拉取最新代码</button>
+      </div>
+      <div class="git-workspace">
+        <section class="git-files"><h3>本地改动（手动勾选）</h3><div id="git-file-list" class="git-file-list"></div></section>
+        <section class="git-preview"><h3>文件差异</h3><pre id="git-diff" class="git-diff">点击文件名查看 Diff。</pre></section>
+      </div>
+      <div class="git-actions">
+        <label for="git-commit-message">提交信息</label>
+        <input id="git-commit-message" maxlength="120" placeholder="例如：更新 Skill 说明和评分">
+        <button id="git-commit-push" class="run-button" type="button">Commit 并 Push</button>
+      </div>
+      <p class="security-note">PAT 由 Git Credential Manager 管理，页面不会读取、保存或显示密钥。敏感文件、运行产物和已暂存文件不能从这里提交。</p>
+      <p id="git-feedback" class="inline-feedback" aria-live="polite"></p>
+    </div>
+  </dialog>
   <footer class="wrap">提示：真实 API key、密码、证书与私钥仅保留在本地安全位置，不写入此仓库。</footer>
-  <script>
-    const repositorySkills = [
-      {status:"tested",folder:"codex-ppt-skill",name:"codex-ppt",title:"Codex PPT",summary:"将文章、报告、论文、笔记或大纲制作成视觉统一的图片式 PPT/PPTX。",headings:["Overview","Hard Constraints","Visible Progress","Default Workflow","Subagent Dispatch","Acceptance Criteria","Reference Map","Documentation and Updates"]},
-      {status:"tested",folder:"dashiai-ppt",name:"dashiai-ppt",title:"DashiAI PPT",summary:"基于预置视觉主题组合页面，生成可离线打开、浏览器编辑并导出 PPTX/PDF 的 HTML 演示。",headings:["版本","Skill 目录","生成原则","使用规则","媒体工作流","工作流","返工与浏览器检查","JSON 结构"]},
-      {status:"tested",folder:"imagegen",name:"imagegen",title:"ImageGen",summary:"生成或编辑照片、插画、纹理、精灵、Mockup 与透明背景等栅格图片，并支持参考图变体。",headings:["Top-level modes and rules","When to use","When not to use","Decision tree","Workflow","Transparent image requests","Prompt augmentation","Use-case taxonomy"]},
-      {status:"tested",folder:"openai-docs",name:"openai-docs",title:"OpenAI Docs",summary:"查询最新 OpenAI 官方文档并给出引用，支持模型选择、API 升级和提示词迁移指导。",headings:["API Key Setup","Quick start","OpenAI product snapshots","If MCP server is missing","Workflow","Reference map","Quality rules","Tooling notes"]},
-      {status:"tested",folder:"professor-synapse",name:"professor-synapse",title:"Professor Synapse",summary:"针对需要领域专家指导的复杂任务创建和管理专家角色，帮助拆解问题并持续沉淀专家能力。",headings:["Core Value: Intellectual Humility","Using Your Thinking for Self-Reflection","Packaging Workflow","Your Resources","Your Workflow","Your Persona","Conversation Format","Global Learned Patterns"]},
-      {status:"tested",folder:"skill-creator",name:"skill-creator",title:"Skill Creator",summary:"创建或更新 Codex skill，规范 SKILL.md、资源目录、UI 元数据、验证和前向测试流程。",headings:["About Skills","Core Principles","Skill Creation Process","Initializing the Skill","Edit the Skill","Validate the Skill","Iterate","Forward-testing"]},
-      {status:"tested",folder:"skill-installer",name:"skill-installer",title:"Skill Installer",summary:"从精选列表或 GitHub 仓库安装 Codex skills 到本机 CODEX_HOME。",headings:["Communication","Scripts","Behavior and Options","Notes"]},
-
-      {status:"pending",folder:"canvas-design",name:"canvas-design",title:"Canvas Design",summary:"运用设计方法创建原创海报、艺术作品和其他静态 PNG/PDF 视觉稿。",headings:["Design Philosophy Creation","Deducing the Subtle Reference","Canvas Creation","Final Step","Multi-page Option"]},
-      {status:"pending",folder:"create-plan",name:"create-plan",title:"Create Plan",summary:"在用户明确要求时，为编码任务生成简洁、可执行的实施计划。",headings:["Goal","Minimal workflow","Plan template","Scope","Action items","Open questions","Checklist item guidance"]},
-      {status:"pending",folder:"develop-web-game",name:"develop-web-game",title:"Develop Web Game",summary:"为 HTML/JS 网页游戏提供小步实现、Playwright 测试、截图检查和控制台错误复查循环。",headings:["Skill paths","Workflow","Test Checklist","Test Artifacts to Review","Core Game Guidelines","Progress Tracking","Playwright Prerequisites","Scripts"]},
-      {status:"pending",folder:"docx",name:"docx",title:"DOCX",summary:"创建、编辑和分析 Word 文档，支持修订、批注、格式保留和文本提取。",headings:["Overview","Workflow Decision Tree","Reading and analyzing content","Creating a new Word document","Editing an existing Word document","Redlining workflow","Converting Documents to Images","Code Style Guidelines"]},
-      {status:"pending",folder:"films-search",name:"films-search",title:"Films Search",summary:"搜索可下载的电影、电视剧与动漫网盘资源；不用于影讯、评价或推荐。",headings:["前置条件","命令","Agent 使用流程","输出格式","配置","注意事项","免责声明"]},
-      {status:"pending",folder:"frontend-design",name:"frontend-design",title:"Frontend Design",summary:"创建具有明确视觉风格的生产级前端页面、组件、海报、仪表盘和 Web 应用。",headings:["Design Thinking","Frontend Aesthetics Guidelines"]},
-      {status:"pending",folder:"frontend-slides",name:"frontend-slides",title:"Frontend Slides",summary:"从零创建动画丰富的 HTML 演示，或将 PPT/PPTX 转换为适合浏览器播放的幻灯片。",headings:["Core Principles","Design Aesthetics","Viewport Fitting Rules","Detect Mode","Content Discovery","Style Discovery","Generate Presentation","PPT Conversion"]},
-      {status:"pending",folder:"imap-smtp-email",name:"imap-smtp-email",title:"IMAP / SMTP Email",summary:"通过 IMAP/SMTP 读取、搜索、标记和发送邮件，支持附件及常见邮箱服务。",headings:["Configuration","Common Email Servers","IMAP Commands","SMTP Commands","Dependencies","Security Notes","Troubleshooting"]},
-      {status:"pending",folder:"local-tools",name:"local-tools",title:"Local Tools",summary:"访问本机系统资源，目前主要用于在 macOS 和 Windows 上管理日历与日程。",headings:["When to Use This Skill","How It Works","Platform Support","Permissions","Calendar Operations","Output Format","Date Format Guidelines","Common Patterns"]},
-      {status:"pending",folder:"music-search",name:"music-search",title:"Music Search",summary:"搜索可下载的歌曲、专辑和无损音频网盘资源；不用于歌词或音乐推荐。",headings:["前置条件","命令","Agent 使用流程","输出格式","配置","注意事项","免责声明"]},
-      {status:"pending",folder:"pdf",name:"pdf",title:"PDF",summary:"提取 PDF 文字和表格，创建、合并、拆分文档并处理表单。",headings:["Overview","Quick Start","Python Libraries","Command-Line Tools","Common Tasks","Quick Reference","Next Steps"]},
-      {status:"pending",folder:"playwright",name:"playwright",title:"Playwright",summary:"从终端控制真实浏览器，完成导航、表单填写、截图、数据提取和 UI 流程调试。",headings:["Prerequisite check","Skill path","Quick start","Core workflow","When to snapshot again","Recommended patterns","Wrapper script","References"]},
-      {status:"pending",folder:"pptx",name:"pptx",title:"PPTX",summary:"创建、编辑和分析 PowerPoint，支持布局、批注、演讲者备注、模板和缩略图检查。",headings:["Overview","Reading and analyzing content","Creating without a template","Editing an existing presentation","Creating using a template","Creating Thumbnail Grids","Converting Slides to Images","Code Style Guidelines"]},
-      {status:"pending",folder:"remotion",name:"remotion-best-practices",title:"Remotion Best Practices",summary:"提供使用 React 和 Remotion 创建视频时的工程与实现最佳实践。",headings:["When to use","Captions","How to use"]},
-      {status:"pending",folder:"scheduled-task",name:"scheduled-task",title:"Scheduled Task",summary:"创建和管理一次性或周期性定时任务，支持查看、修改、启停和删除。",headings:["核心原则","使用场景","管理已有任务","创建新任务","重要注意事项"]},
-      {status:"pending",folder:"seedance",name:"seedance",title:"Seedance",summary:"使用火山引擎 Seedance 生成视频，支持文生视频、图生视频和音频同步。",headings:["配置","前置检查","工作流程","配额和限制","使用示例","参数说明","模型选择","高级选项"]},
-      {status:"pending",folder:"seedream",name:"seedream",title:"Seedream",summary:"使用火山引擎 Seedream 生成或编辑图片，支持文生图、图生图、多图融合和联网生成。",headings:["配置","前置检查","工作流程","配额和限制","使用示例","参数说明","模型选择","高级选项"]},
-      {status:"pending",folder:"technology-news-search",name:"technology-search",title:"Technology News Search",summary:"搜索科技博客、开发者论坛和 IT 媒体，按热度整理软硬件、AI 与基础设施动态并支持中英互译。",headings:["Overview","Smart Source Routing","Supported Technical Domains","Quick Start","Workflow","Source Balancing","Output Format","Hot News"]},
-      {status:"pending",folder:"web-search",name:"web-search",title:"Web Search",summary:"通过 Playwright 控制浏览器进行实时网页搜索，获取知识截止日期之后的最新信息。",headings:["When to Use This Skill","How It Works","Basic Usage","Advanced Usage","Best Practices","Common Patterns"]},
-      {status:"pending",folder:"xlsx",name:"xlsx",title:"XLSX",summary:"创建、编辑和分析 Excel、CSV 与 TSV，支持公式、格式、数据分析、可视化和重算。",headings:["All Excel files","Financial models","Overview","Important Requirements","Reading and analyzing data","Excel File Workflows","Use Formulas","Common Workflow"]}
-    ];
-
-    const skillDetails = {
-      "gpt-image": {name:"GPT Image",icon:"✦",color:"blue",summary:"通过 OpenAI-compatible Images API 完成从提示词设计到生成、参考图编辑和局部重绘的完整流程。",capabilities:["文生图、参考图编辑与 Mask 局部重绘","162 条分类提示词案例与中文排版方法","多参考图、尺寸、质量和输出格式控制"],examples:["制作中文活动海报并准确显示指定文案","把产品参考图改成商业摄影风格","根据透明 Mask 只替换图片局部"],outputs:["PNG、JPEG 或 WebP 图片","提示词与关键生成参数","多张变体图片"],notes:["需要 OPENAI_BASE_URL 与 OPENAI_API_KEY","默认模型为 gpt-image-2","真实密钥仅保存在本地 .env"],path:"自创skills/gpt-image"},
-      "html-ppt-build": {name:"HTML PPT Build",icon:"▣",color:"purple",summary:"把长报告和 Markdown 转化为独立 HTML 幻灯片，以网页排版保证中文技术内容清晰，再导出为 PPTX。",capabilities:["内容拆页与技术叙事编排","独立 HTML/CSS 幻灯片制作","全页预览与高清图片式 PPTX 导出"],examples:["把项目申报书制作成技术答辩 PPT","将 Markdown 报告转换为高密度演示稿","生成架构、技术路线和项目成效页面"],outputs:["slide-XX.html 页面","全幻灯片预览索引","高清图片式 PPTX"],notes:["适合文字密集的中文技术汇报","PPTX 内页面以高清图呈现","复杂素材可能需要额外生成"],path:"自创skills/html-ppt-build"},
-      "ppt-technical-redesign": {name:"PPT Technical Redesign",icon:"◫",color:"purple",summary:"从信息结构、表达逻辑和视觉层级三个方面重构普通 PPT，使其更像专业技术汇报而非模板堆叠。",capabilities:["重组页面叙事和信息层级","技术路线、架构与能力页面重设计","将泛化表述改为项目专属内容"],examples:["改造项目申报和比赛路演页面","提升论文答辩或研究报告的专业度","把一页文字稿重构为技术能力图"],outputs:["重构后的页面文案和布局方案","高信息密度技术页面","可继续制作的视觉规格"],notes:["强调逻辑与项目针对性","不会凭空补造未经提供的数据","可与 PPT 制作 skill 联用"],path:"自创skills/ppt-technical-redesign"},
-      "arxiv-search": {name:"arXiv Search",icon:"⌕",color:"green",summary:"通过稳定的结构化工具检索 arXiv，适合查找最新论文、精确条目和可下载 PDF。",capabilities:["关键词、分类和日期检索","精确 arXiv ID 查询","提取作者、摘要、版本与 PDF 链接"],examples:["查找最近一周的多模态预印本","查询指定 arXiv ID 的完整信息","筛选 cs.CV 分类下的某主题论文"],outputs:["结构化论文列表","摘要、作者和发布日期","arXiv 页面与 PDF URL"],notes:["专注 arXiv 数据源","结果是否最新取决于 arXiv 索引","不替代论文质量评审"],path:"自创skills/arxiv-search"},
-      "semantic-scholar-search": {name:"Semantic Scholar Search",icon:"⌘",color:"green",summary:"围绕论文、作者和引用关系查询 Semantic Scholar Academic Graph，补足 arXiv 不具备的学术关系数据。",capabilities:["论文与作者详情查询","引用和参考文献扩展","开放获取 PDF、外部 ID 与影响力指标"],examples:["查看某篇论文被哪些工作引用","查询作者的论文历史与影响力","沿参考文献扩展相关研究"],outputs:["论文和作者结构化数据","引用与参考文献列表","开放获取元数据和统计指标"],notes:["统计值来自 Semantic Scholar","部分论文元数据可能不完整","适合文献脉络梳理而非正文解析"],path:"自创skills/semantic-scholar-search"},
-      "mineru-to-markdown": {name:"MinerU To Markdown",icon:"↧",color:"green",summary:"使用 MinerU 云端解析把多种文件和公开 URL 转换为结构化 Markdown，并可保留图片、表格与公式。",capabilities:["PDF、Office、图片和网页解析","OCR、表格与公式识别","页码范围与配套图片资源导出"],examples:["把扫描版 PDF 识别成 Markdown","提取 PPT 或 Word 中的正文和表格","解析公开网页并保存结构化内容"],outputs:["Markdown 文档","图片和资源目录","可选的公式、表格与 OCR 结果"],notes:["使用 MinerU 云端 API","私有文件会上传到所配置的服务","解析效果受原文档质量影响"],path:"自创skills/mineru-to-markdown"},
-      "douyin-video-downloader": {name:"Douyin Video Downloader",icon:"▶",color:"orange",summary:"把公开可访问的抖音内容完整归档到本地标题目录，保留媒体文件和可追溯元数据。",capabilities:["视频、封面与图文素材下载","保存来源 URL、页面 HTML 与 README","保留原始 videoDetail JSON"],examples:["归档一个公开抖音视频链接","保存精选页中的视频和封面","建立可复查的本地素材目录"],outputs:["视频、封面和章节图片","HTML、README 与来源文件","原始结构化元数据"],notes:["仅处理公开可访问内容","页面结构变化可能影响下载","遵守平台规则和内容版权"],path:"自创skills/douyin-video-downloader"},
-      "xiaohongshu-note-downloader": {name:"Xiaohongshu Note Downloader",icon:"▧",color:"orange",summary:"将公开小红书笔记的正文与媒体内容整理成便于备份和查阅的本地目录。",capabilities:["图文和视频笔记下载","页面 HTML 与来源链接保存","按笔记标题组织目录"],examples:["保存一篇公开图文笔记","归档包含视频的小红书内容","整理公开笔记的全部媒体素材"],outputs:["图片、视频和页面 HTML","来源链接与 README 元数据","标题命名的本地归档目录"],notes:["仅适用于公开链接","平台页面变化可能影响解析","使用时需尊重内容版权"],path:"自创skills/xiaohongshu-note-downloader"},
-      "video-narration-tts": {name:"Video Narration TTS",icon:"♬",color:"orange",summary:"先分析视频实际画面和节奏，再重写中文旁白，生成自然语音并与原视频合成。",capabilities:["关键帧与画面顺序分析","旁白改写、分段和时长适配","Aliyun MaaS/Qwen TTS 与 MP4 合成"],examples:["为无声产品演示添加中文解说","替换与画面不匹配的原旁白","把幻灯片录屏制作成配音成片"],outputs:["带中文配音的 MP4","独立旁白音频","与画面对应的旁白文本"],notes:["需要 ALIYUN_MAAS_API_KEY 和 HOST","依赖 ffmpeg 完成音视频处理","模型与音色取决于端点权限"],path:"自创skills/video-narration-tts"},
-      "local-credential-memory": {name:"Local Credential Memory",icon:"⌑",color:"blue",summary:"在一个受当前 Windows 用户保护的本地 TOML 文档中保存和使用敏感凭据，并严格限制读取范围。",capabilities:["保存、检索、更新和删除凭据","按条目最小化读取并用于授权任务","统一管理 API、SSH、数据库和代理凭据"],examples:["记住一个 API key 和服务地址","使用已保存的 SSH 登录完成任务","更新或删除指定账号的密码"],outputs:["更新后的本地 credentials.toml 条目","脱敏的操作确认","授权任务中的安全凭据注入"],notes:["凭据文件是本地明文敏感数据","不会把秘密写入 Git 或回复","仅在用户授权的目标中使用"],path:"自创skills/local-credential-memory"},
-      "temporary-public-file-links": {name:"Temporary Public File Links",icon:"↗",color:"blue",summary:"为本地文件或目录生成短期可访问的公开 URL，适合解决附件不可见和跨设备查看问题。",capabilities:["上传单个文件或整个目录","生成短期公开访问链接","分享截图、报告、日志和生成媒体"],examples:["把本地截图发成临时链接","分享一个报告或压缩包","临时公开生成的视频或网页"],outputs:["一个或多个临时公开 URL","上传结果和有效期信息","必要时的目录压缩包"],notes:["链接内容在有效期内公开可访问","不要上传未获授权的敏感数据","服务可用性取决于配置的上传端点"],path:"自创skills/temporary-public-file-links"}
-    };
-
-    const statusNames = {tested:"已测",pending:"待测"};
-    const statusFolders = {tested:"已测skills",pending:"待测skills"};
-    const repositoryDetails = {};
-    const renderRepositoryCards = status => {
-      const icon = status === 'tested' ? '✓' : '◌';
-      const color = status === 'tested' ? 'green' : 'orange';
-      const target = document.getElementById(`${status}-grid`);
-      const items = repositorySkills.filter(skill => skill.status === status);
-      target.innerHTML = items.map(skill => {
-        const key = `repo:${status}:${skill.folder}`;
-        const count = skill.headings.length;
-        repositoryDetails[key] = {
-          name:skill.title, slug:skill.name, icon, color, summary:skill.summary,
-          capabilities:skill.headings.slice(0,4).length ? skill.headings.slice(0,4) : ['阅读 SKILL.md 了解完整工作流'],
-          examples:['根据该 skill 的触发范围处理对应任务','调用前检查所需依赖、服务配置与权限'],
-          outputs:['具体产出由用户请求和 skill 工作流决定',`SKILL.md 中记录了 ${count} 个主要主题章节`],
-          notes:[`维护状态：${statusNames[status]}`, ...skill.headings.slice(4,8)],
-          path:`${statusFolders[status]}/${skill.folder}`
-        };
-        return `<button type="button" class="card repo-card" data-skill="${key}"><div class="card-top"><div class="icon ${color}">${icon}</div><div><h3>${skill.title}</h3><p class="slug">${skill.name}</p></div></div><span class="status-label ${status}">${statusNames[status]}</span><p class="desc">${skill.summary}</p><div class="flow"><strong>${skill.name}</strong><span class="arrow">→</span>SKILL.md<span class="arrow">→</span><strong>${count} 个主题章节</strong></div><span class="more">查看详细信息 <span>→</span></span></button>`;
-      }).join('');
-    };
-    renderRepositoryCards('tested');
-    renderRepositoryCards('pending');
-
-    const tabs = [...document.querySelectorAll('.tab')];
-    const sections = [...document.querySelectorAll('[data-status-section]')];
-    tabs.forEach(tab => tab.addEventListener('click', () => {
-      const filter = tab.dataset.filter;
-      tabs.forEach(item => item.setAttribute('aria-selected', String(item === tab)));
-      sections.forEach(section => { section.hidden = filter !== 'all' && section.dataset.statusSection !== filter; });
-    }));
-
-    const dialog = document.getElementById('skill-dialog');
-    const closeButton = document.getElementById('dialog-close');
-    let lastTrigger = null;
-    const fillList = (id, items) => { document.getElementById(id).innerHTML = items.map(item => `<li>${item}</li>`).join(''); };
-    document.querySelectorAll('[data-skill]').forEach(card => card.addEventListener('click', () => {
-      const detail = skillDetails[card.dataset.skill] || repositoryDetails[card.dataset.skill];
-      if (!detail) return;
-      lastTrigger = card;
-      document.getElementById('dialog-name').textContent = detail.name;
-      document.getElementById('dialog-slug').textContent = detail.slug || card.dataset.skill;
-      document.getElementById('dialog-summary').textContent = detail.summary;
-      document.getElementById('dialog-path').textContent = detail.path;
-      const icon = document.getElementById('dialog-icon');
-      icon.textContent = detail.icon;
-      icon.className = `icon ${detail.color}`;
-      fillList('dialog-capabilities', detail.capabilities);
-      fillList('dialog-examples', detail.examples);
-      fillList('dialog-outputs', detail.outputs);
-      fillList('dialog-notes', detail.notes);
-      dialog.showModal();
-    }));
-    closeButton.addEventListener('click', () => dialog.close());
-    dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
-    dialog.addEventListener('close', () => { if (lastTrigger) lastTrigger.focus(); });
-  </script>
+  <script type="module" src="/playground/static/js/app.js"></script>
 </body>
 </html>

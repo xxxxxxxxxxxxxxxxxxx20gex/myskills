@@ -1,0 +1,18 @@
+rating_levels:
+  A:
+    name: 推荐
+    description: 效果稳定，可以直接使用
+    color: '#15966f'
+  B:
+    name: 可用
+    description: 基本可用，但仍有一些限制
+    color: '#d98522'
+  C:
+    name: 待优化
+    description: 效果不稳定，需要继续修改
+    color: '#d34b4b'
+skills:
+  自创skills/gpt-image:
+    rating: A
+    note: ''
+    updated_at: '2026-08-07T08:34:19+08:00'

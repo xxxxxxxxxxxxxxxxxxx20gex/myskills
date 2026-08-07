@@ -8,6 +8,10 @@ node_modules/
 dist/
 build/
 workspace/
+.runs/
+.agents/skills/
+playground-uploads/
+*.log
 *.pem
 *.key
 *.crt

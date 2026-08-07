@@ -1,4 +1,4 @@
 interface:
   display_name: "Local Credential Memory"
-  short_description: "Securely maintain passwords, API keys, and SSH logins"
-  default_prompt: "Use $local-credential-memory to securely save, find, update, delete, or use one of my local credentials."
+  short_description: "Discover, import, and securely reuse local credentials"
+  default_prompt: "Use $local-credential-memory to securely discover or import credentials from an authorized local configuration, then save, find, update, delete, or use them."

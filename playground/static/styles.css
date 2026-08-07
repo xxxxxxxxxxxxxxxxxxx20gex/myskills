@@ -85,6 +85,24 @@
     .git-summary strong { color:var(--muted); font-size:11px; }
     .git-summary span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; font-weight:700; }
     .git-toolbar { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .git-action-button { position:relative; min-width:92px; overflow:hidden; border-width:1px; box-shadow:0 3px 8px rgba(25,39,74,.06); transition:color .18s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .12s ease; }
+    .git-action-button.refresh { color:#2563c9; border-color:#bdd1fa; background:#eef5ff; }
+    .git-action-button.fetch { color:#7046bd; border-color:#d4c2f4; background:#f5f0ff; }
+    .git-action-button.pull { color:#087b62; border-color:#afe0d2; background:#ecfaf5; }
+    .git-action-button:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 18px rgba(25,39,74,.14); }
+    .git-action-button.refresh:hover:not(:disabled), .git-action-button.refresh.is-loading { color:#fff; border-color:#3975dc; background:#3975dc; }
+    .git-action-button.fetch:hover:not(:disabled), .git-action-button.fetch.is-loading { color:#fff; border-color:#8157cc; background:#8157cc; }
+    .git-action-button.pull:hover:not(:disabled), .git-action-button.pull.is-loading { color:#fff; border-color:#159779; background:#159779; }
+    .git-action-button:active:not(:disabled) { transform:translateY(1px) scale(.97); box-shadow:0 2px 5px rgba(25,39,74,.12); }
+    .git-action-button.is-loading { padding-left:31px; cursor:wait; opacity:1; }
+    .git-action-button.is-loading::before { position:absolute; top:50%; left:12px; width:11px; height:11px; margin-top:-7px; border:2px solid rgba(255,255,255,.42); border-top-color:#fff; border-radius:50%; content:""; animation:git-button-spin .7s linear infinite; }
+    .git-action-button.is-success { color:#fff; border-color:#159779; background:#159779; animation:git-button-pop .38s ease; }
+    .git-action-button.is-error { color:#fff; border-color:#cf4545; background:#cf4545; animation:git-button-shake .34s ease; }
+    .git-action-button:focus-visible { outline:3px solid rgba(57,103,232,.25); outline-offset:2px; }
+    @keyframes git-button-spin { to { transform:rotate(360deg); } }
+    @keyframes git-button-pop { 50% { transform:scale(1.06); } }
+    @keyframes git-button-shake { 25% { transform:translateX(-3px); } 75% { transform:translateX(3px); } }
+    @media (prefers-reduced-motion:reduce) { .git-action-button { transition:none; } .git-action-button.is-loading::before, .git-action-button.is-success, .git-action-button.is-error { animation:none; } }
     .git-proxy-settings { display:flex; align-items:center; gap:7px; margin-bottom:12px; padding:10px 12px; border:1px solid var(--line); border-radius:11px; background:#fbfcff; }
     .git-proxy-settings label { font-size:12px; font-weight:750; }
     .git-proxy-settings span { color:var(--muted); font:12px ui-monospace,SFMono-Regular,Consolas,monospace; }

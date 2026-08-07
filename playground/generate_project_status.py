@@ -9,7 +9,7 @@ import yaml
 
 MODULES = [
     ("skills-showcase.html", "页面外壳", "保留语义化 HTML、卡片容器、详情弹窗和右侧对话区域"),
-    ("playground/static/styles.css", "样式系统", "负责响应式布局、卡片、对话、日志和产物预览样式"),
+    ("playground/static/styles.css", "样式系统", "负责响应式布局、卡片、对话、Git 操作反馈、日志和产物预览样式"),
     ("playground/static/js/data.js", "Skill 数据", "维护自创 Skill 详情以及已测/待测 Skill 展示元数据"),
     ("playground/static/js/catalog.js", "目录交互", "渲染仓库 Skill 卡片、分类标签和详情弹窗"),
     ("playground/static/js/api.js", "API 客户端", "封装配置读取、任务创建和运行状态查询"),
@@ -18,7 +18,7 @@ MODULES = [
     ("playground/static/js/resize.js", "面板缩放", "拖动或用键盘调整对话栏宽度，并在浏览器本地记忆"),
     ("playground/static/js/chat.js", "对话状态", "管理模型/Skill 选择、Codex session、轮询、日志、Markdown 和消息"),
     ("playground/static/js/ratings.js", "评分交互", "管理 A/B/C 评分、备注、筛选和等级显示设置"),
-    ("playground/static/js/git-panel.js", "Git 项目管理", "展示状态与 Diff，并触发 fetch、ff-only pull、选择性 commit/push"),
+    ("playground/static/js/git-panel.js", "Git 项目管理", "展示状态与 Diff，提供 Git 操作按钮的执行反馈，并触发 fetch、ff-only pull、选择性 commit/push"),
     ("playground/static/js/app.js", "前端编排", "组合目录、对话与面板缩放模块并选择默认 Skill"),
     ("playground/server.py", "本地 Runner", "注册原始 Skills，以 `$skill-name` 加用户原文桥接 Codex CLI，提供运行状态并执行静态资源白名单"),
     ("playground/rating_service.py", "评分服务", "校验并原子更新可进入 Git 的 skill-metadata.yaml"),

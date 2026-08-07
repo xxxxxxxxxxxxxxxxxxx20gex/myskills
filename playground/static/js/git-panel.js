@@ -1,6 +1,29 @@
 import { commitAndPushGit, fetchGitUpdates, getGitDiff, getGitStatus, pullGitUpdates, saveGitProxyPort } from './api.js';
 
 let currentStatus = null;
+const actionTimers = new WeakMap();
+
+function setActionState(id, state, label) {
+  const button = document.getElementById(id);
+  const previousTimer = actionTimers.get(button);
+  if (previousTimer) window.clearTimeout(previousTimer);
+  button.dataset.defaultLabel ||= button.textContent;
+  button.classList.remove('is-loading', 'is-success', 'is-error');
+  button.classList.add(`is-${state}`);
+  button.textContent = label;
+  button.disabled = state === 'loading';
+  button.setAttribute('aria-busy', state === 'loading' ? 'true' : 'false');
+
+  if (state === 'success' || state === 'error') {
+    const timer = window.setTimeout(() => {
+      button.classList.remove(`is-${state}`);
+      button.textContent = button.dataset.defaultLabel;
+      button.disabled = id !== 'git-refresh' && Boolean(currentStatus?.active_runs);
+      actionTimers.delete(button);
+    }, 1600);
+    actionTimers.set(button, timer);
+  }
+}
 
 function setFeedback(message, failed = false) {
   const target = document.getElementById('git-feedback');
@@ -73,13 +96,16 @@ function renderStatus(status) {
   if (blocked) setFeedback('有 Skill 智能体正在运行，Git 写操作暂时禁用。', true);
 }
 
-async function refresh() {
+async function refresh(showButtonState = false) {
+  if (showButtonState) setActionState('git-refresh', 'loading', '刷新中…');
   setFeedback('正在读取 Git 状态……');
   try {
     renderStatus(await getGitStatus());
     if (!currentStatus.active_runs) setFeedback('Git 状态已刷新。');
+    if (showButtonState) setActionState('git-refresh', 'success', '✓ 刷新成功');
   } catch (error) {
     setFeedback(error.message, true);
+    if (showButtonState) setActionState('git-refresh', 'error', '刷新失败');
   }
 }
 
@@ -90,7 +116,7 @@ export function initializeGitPanel() {
     refresh();
   });
   document.getElementById('git-dialog-close').addEventListener('click', () => dialog.close());
-  document.getElementById('git-refresh').addEventListener('click', refresh);
+  document.getElementById('git-refresh').addEventListener('click', () => refresh(true));
   document.getElementById('git-save-proxy').addEventListener('click', async () => {
     const input = document.getElementById('git-proxy-port');
     const port = Number(input.value);
@@ -107,24 +133,30 @@ export function initializeGitPanel() {
     }
   });
   document.getElementById('git-fetch').addEventListener('click', async () => {
+    setActionState('git-fetch', 'loading', '检查中…');
     setFeedback('正在检查远程更新……');
     try {
       const result = await fetchGitUpdates();
       renderStatus(result.status);
       setFeedback(result.message || '远程状态已更新。');
+      setActionState('git-fetch', 'success', '✓ 检查完成');
     } catch (error) {
       setFeedback(error.message, true);
+      setActionState('git-fetch', 'error', '检查失败');
     }
   });
   document.getElementById('git-pull').addEventListener('click', async () => {
     if (!window.confirm('仅在工作区干净时执行 git pull --ff-only。继续吗？')) return;
+    setActionState('git-pull', 'loading', '拉取中…');
     setFeedback('正在拉取最新代码……');
     try {
       const result = await pullGitUpdates();
       renderStatus(result.status);
       setFeedback(`${result.message}。服务代码可能已变化，请随后重启 Playground。`);
+      setActionState('git-pull', 'success', '✓ 拉取成功');
     } catch (error) {
       setFeedback(error.message, true);
+      setActionState('git-pull', 'error', '拉取失败');
     }
   });
   document.getElementById('git-commit-push').addEventListener('click', async () => {

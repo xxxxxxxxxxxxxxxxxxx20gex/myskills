@@ -1,6 +1,4 @@
-export const apiBase = window.location.protocol === 'file:'
-  ? 'http://127.0.0.1:8765'
-  : window.location.origin;
+export const apiBase = window.location.origin;
 
 async function requestJson(path, options = {}) {
   const response = await fetch(`${apiBase}${path}`, options);

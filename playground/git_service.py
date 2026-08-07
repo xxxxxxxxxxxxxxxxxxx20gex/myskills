@@ -96,11 +96,10 @@ class GitService:
         pure = PurePosixPath(normalized)
         if not normalized or pure.is_absolute() or ".." in pure.parts:
             return False
-        lowered = normalized.lower()
         name = pure.name.lower()
         if name in {".env_example", ".env.example"}:
             return True
-        blocked_parts = {".runs", ".agents", "node_modules", "playground-uploads", "__pycache__"}
+        blocked_parts = {".git", ".runs", ".agents", "node_modules", "playground-uploads", "__pycache__"}
         if any(part.lower() in blocked_parts for part in pure.parts):
             return False
         if name == ".env" or name.startswith(".env.") or name.startswith("secrets."):

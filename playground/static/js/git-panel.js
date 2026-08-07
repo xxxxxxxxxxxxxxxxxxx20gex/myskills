@@ -142,8 +142,13 @@ export function initializeGitPanel() {
       document.getElementById('git-commit-message').value = '';
       setFeedback(`${result.message}（commit ${result.commit}）`);
     } catch (error) {
-      setFeedback(error.message, true);
-      await refresh();
+      const message = error.message;
+      try {
+        renderStatus(await getGitStatus());
+      } catch (_) {
+        // Preserve the original commit/push error; a status refresh is secondary.
+      }
+      setFeedback(message, true);
     }
   });
 }

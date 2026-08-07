@@ -19,20 +19,20 @@
 | `skills-showcase.html` | 页面外壳 | 正常 | 16,760 B | — | 保留语义化 HTML、卡片容器、详情弹窗和右侧对话区域 |
 | `playground/static/styles.css` | 样式系统 | 正常 | 19,214 B | — | 负责响应式布局、卡片、对话、日志和产物预览样式 |
 | `playground/static/js/data.js` | Skill 数据 | 正常 | 17,615 B | `repositorySkills`, `skillDetails` | 维护自创 Skill 详情以及已测/待测 Skill 展示元数据 |
-| `playground/static/js/catalog.js` | 目录交互 | 正常 | 4,883 B | `initializeCatalog` | 渲染仓库 Skill 卡片、分类标签和详情弹窗 |
-| `playground/static/js/api.js` | API 客户端 | 正常 | 2,367 B | `apiBase`, `getRunnerConfig`, `createRun`, `getRun`, `getRatings`, `saveRatingLevels`, `saveSkillRating`, `getGitStatus`, `getGitDiff`, `fetchGitUpdates`, `pullGitUpdates`, `commitAndPushGit`, `saveGitProxyPort` | 封装配置读取、任务创建和运行状态查询 |
+| `playground/static/js/catalog.js` | 目录交互 | 正常 | 5,729 B | `initializeCatalog` | 渲染仓库 Skill 卡片、分类标签和详情弹窗 |
+| `playground/static/js/api.js` | API 客户端 | 正常 | 2,298 B | `apiBase`, `getRunnerConfig`, `createRun`, `getRun`, `getRatings`, `saveRatingLevels`, `saveSkillRating`, `getGitStatus`, `getGitDiff`, `fetchGitUpdates`, `pullGitUpdates`, `commitAndPushGit`, `saveGitProxyPort` | 封装配置读取、任务创建和运行状态查询 |
 | `playground/static/js/artifacts.js` | 产物渲染 | 正常 | 1,760 B | `createArtifacts` | 预览图片、音频、视频、HTML 和普通文件 |
 | `playground/static/js/markdown.js` | Markdown 渲染 | 正常 | 3,694 B | `renderMarkdown` | 安全渲染标题、列表、引用、代码和外部链接，不执行原始 HTML |
 | `playground/static/js/resize.js` | 面板缩放 | 正常 | 2,691 B | `initializePanelResize` | 拖动或用键盘调整对话栏宽度，并在浏览器本地记忆 |
 | `playground/static/js/chat.js` | 对话状态 | 正常 | 6,765 B | `initializeChat` | 管理模型/Skill 选择、Codex session、轮询、日志、Markdown 和消息 |
 | `playground/static/js/ratings.js` | 评分交互 | 正常 | 4,031 B | `initializeRatings` | 管理 A/B/C 评分、备注、筛选和等级显示设置 |
-| `playground/static/js/git-panel.js` | Git 项目管理 | 正常 | 6,286 B | `initializeGitPanel` | 展示状态与 Diff，并触发 fetch、ff-only pull、选择性 commit/push |
+| `playground/static/js/git-panel.js` | Git 项目管理 | 正常 | 6,461 B | `initializeGitPanel` | 展示状态与 Diff，并触发 fetch、ff-only pull、选择性 commit/push |
 | `playground/static/js/app.js` | 前端编排 | 正常 | 872 B | — | 组合目录、对话与面板缩放模块并选择默认 Skill |
-| `playground/server.py` | 本地 Runner | 正常 | 21,774 B | — | 注册原始 Skills，以 `$skill-name` 加用户原文桥接 Codex CLI，并提供运行状态 |
+| `playground/server.py` | 本地 Runner | 正常 | 23,160 B | — | 注册原始 Skills，以 `$skill-name` 加用户原文桥接 Codex CLI，提供运行状态并执行静态资源白名单 |
 | `playground/rating_service.py` | 评分服务 | 正常 | 4,599 B | — | 校验并原子更新可进入 Git 的 skill-metadata.yaml |
-| `playground/git_service.py` | Git 服务 | 正常 | 10,936 B | — | 执行白名单 Git 参数、保护敏感文件并通过 GCM 推送 |
+| `playground/git_service.py` | Git 服务 | 正常 | 10,907 B | — | 执行白名单 Git 参数、保护敏感文件并通过 GCM 推送 |
 | `skill-metadata.yaml` | 维护数据 | 正常 | 429 B | — | 保存 A/B/C 显示设置、Skill 评分和备注，随 Git 同步 |
-| `playground/generate_project_status.py` | 状态文档生成器 | 正常 | 8,524 B | — | 扫描模块、配置与 Skill 目录并更新本文件 |
+| `playground/generate_project_status.py` | 状态文档生成器 | 正常 | 8,551 B | — | 扫描模块、配置与 Skill 目录并更新本文件 |
 
 ## 数据与调用关系
 

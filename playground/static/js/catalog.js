@@ -2,7 +2,47 @@ const statusNames = { tested: '已测', pending: '待测' };
 const statusFolders = { tested: '已测skills', pending: '待测skills' };
 
 function fillList(id, items) {
-  document.getElementById(id).innerHTML = items.map(item => `<li>${item}</li>`).join('');
+  document.getElementById(id).replaceChildren(...items.map(item => {
+    const entry = document.createElement('li');
+    entry.textContent = item;
+    return entry;
+  }));
+}
+
+function appendTextElement(parent, tag, className, text) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  element.textContent = text;
+  parent.append(element);
+  return element;
+}
+
+function createRepositoryCard(key, detail, status, count) {
+  const card = document.createElement('button');
+  card.type = 'button';
+  card.className = 'card repo-card';
+  card.dataset.skill = key;
+  card.dataset.skillPath = detail.path;
+
+  const top = appendTextElement(card, 'div', 'card-top', '');
+  appendTextElement(top, 'div', `icon ${detail.color}`, detail.icon);
+  const title = appendTextElement(top, 'div', '', '');
+  appendTextElement(title, 'h3', '', detail.name);
+  appendTextElement(title, 'p', 'slug', detail.slug);
+  appendTextElement(card, 'span', `status-label ${status}`, statusNames[status]);
+  appendTextElement(card, 'p', 'desc', detail.summary);
+
+  const flow = appendTextElement(card, 'div', 'flow', '');
+  appendTextElement(flow, 'strong', '', detail.slug);
+  appendTextElement(flow, 'span', 'arrow', '→');
+  flow.append(document.createTextNode('SKILL.md'));
+  appendTextElement(flow, 'span', 'arrow', '→');
+  appendTextElement(flow, 'strong', '', `${count} 个主题章节`);
+
+  const more = appendTextElement(card, 'span', 'more', '');
+  more.append(document.createTextNode('查看详细信息'));
+  appendTextElement(more, 'span', '', '→');
+  return card;
 }
 
 function renderRepositoryCards(repositorySkills) {
@@ -12,7 +52,7 @@ function renderRepositoryCards(repositorySkills) {
     const color = status === 'tested' ? 'green' : 'orange';
     const target = document.getElementById(`${status}-grid`);
     const items = repositorySkills.filter(skill => skill.status === status);
-    target.innerHTML = items.map(skill => {
+    target.replaceChildren(...items.map(skill => {
       const key = `repo:${status}:${skill.folder}`;
       const count = skill.headings.length;
       details[key] = {
@@ -29,12 +69,8 @@ function renderRepositoryCards(repositorySkills) {
         notes: [`维护状态：${statusNames[status]}`, ...skill.headings.slice(4, 8)],
         path: `${statusFolders[status]}/${skill.folder}`,
       };
-      return `<button type="button" class="card repo-card" data-skill="${key}"><div class="card-top"><div class="icon ${color}">${icon}</div><div><h3>${skill.title}</h3><p class="slug">${skill.name}</p></div></div><span class="status-label ${status}">${statusNames[status]}</span><p class="desc">${skill.summary}</p><div class="flow"><strong>${skill.name}</strong><span class="arrow">→</span>SKILL.md<span class="arrow">→</span><strong>${count} 个主题章节</strong></div><span class="more">查看详细信息 <span>→</span></span></button>`;
-    }).join('');
-    target.querySelectorAll('[data-skill]').forEach(card => {
-      const detail = details[card.dataset.skill];
-      if (detail) card.dataset.skillPath = detail.path;
-    });
+      return createRepositoryCard(key, details[key], status, count);
+    }));
   });
   return details;
 }

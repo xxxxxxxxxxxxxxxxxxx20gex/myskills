@@ -392,12 +392,43 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", origin)
             self.send_header("Vary", "Origin")
         self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
         super().end_headers()
 
     @staticmethod
     def allowed_origins() -> set[str]:
         port = int(CONFIG["server"]["port"])
-        return {"null", f"http://127.0.0.1:{port}", f"http://localhost:{port}"}
+        return {f"http://127.0.0.1:{port}", f"http://localhost:{port}"}
+
+    @staticmethod
+    def public_file(request_path: str) -> Path | None:
+        if request_path in {"/", "/skills-showcase.html"}:
+            return ROOT / "skills-showcase.html"
+        prefix = "/playground/static/"
+        if not request_path.startswith(prefix):
+            return None
+        relative = urllib.parse.unquote(request_path[len(prefix):])
+        try:
+            target = safe_relative(ROOT / "playground" / "static", relative, must_exist=True)
+        except (ValueError, FileNotFoundError):
+            return None
+        return target if target.is_file() else None
+
+    def send_public_file(self, target: Path, *, head_only: bool = False) -> None:
+        self.send_response(200)
+        self.send_header("Content-Type", mimetypes.guess_type(target.name)[0] or "application/octet-stream")
+        self.send_header("Content-Length", str(target.stat().st_size))
+        self.end_headers()
+        if not head_only:
+            with target.open("rb") as stream:
+                self.wfile.write(stream.read())
+
+    def do_HEAD(self) -> None:
+        target = self.public_file(urllib.parse.urlparse(self.path).path)
+        if target is None:
+            self.send_error(404)
+            return
+        self.send_public_file(target, head_only=True)
 
     def do_OPTIONS(self) -> None:
         origin = self.headers.get("Origin")
@@ -548,9 +579,11 @@ class Handler(SimpleHTTPRequestHandler):
                 return
             self.json_response(200, run)
             return
-        if path == "/":
-            self.path = "/skills-showcase.html"
-        super().do_GET()
+        target = self.public_file(path)
+        if target is None:
+            self.send_error(404)
+            return
+        self.send_public_file(target)
 
 
 def main() -> None:

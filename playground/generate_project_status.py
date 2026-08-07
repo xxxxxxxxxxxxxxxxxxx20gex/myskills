@@ -20,7 +20,7 @@ MODULES = [
     ("playground/static/js/ratings.js", "评分交互", "管理 A/B/C 评分、备注、筛选和等级显示设置"),
     ("playground/static/js/git-panel.js", "Git 项目管理", "展示状态与 Diff，并触发 fetch、ff-only pull、选择性 commit/push"),
     ("playground/static/js/app.js", "前端编排", "组合目录、对话与面板缩放模块并选择默认 Skill"),
-    ("playground/server.py", "本地 Runner", "注册原始 Skills，以 `$skill-name` 加用户原文桥接 Codex CLI，并提供运行状态"),
+    ("playground/server.py", "本地 Runner", "注册原始 Skills，以 `$skill-name` 加用户原文桥接 Codex CLI，提供运行状态并执行静态资源白名单"),
     ("playground/rating_service.py", "评分服务", "校验并原子更新可进入 Git 的 skill-metadata.yaml"),
     ("playground/git_service.py", "Git 服务", "执行白名单 Git 参数、保护敏感文件并通过 GCM 推送"),
     ("skill-metadata.yaml", "维护数据", "保存 A/B/C 显示设置、Skill 评分和备注，随 Git 同步"),

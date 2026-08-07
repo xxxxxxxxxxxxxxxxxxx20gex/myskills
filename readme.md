@@ -1,6 +1,6 @@
 # 我的 Codex Skills
 
-个人维护的 Codex skills 仓库。打开 [skills-showcase.html](skills-showcase.html) 可按维护状态浏览全部 skill，并点击卡片查看功能、文档章节和目录位置。启动本地 Skill Playground 后，还可以把所选 skill 和任务直接交给本机 Codex CLI，并在页面中查看执行过程、回答和生成产物。模块、接口、模型和 Skill 分类的实时维护状态见自动生成的 [PROJECT_STATUS.md](PROJECT_STATUS.md)。
+个人维护的 Codex skills 仓库。启动本地 Skill Playground 并访问 `http://127.0.0.1:8765`，可按维护状态浏览全部 skill，点击卡片查看详情，并把任务直接交给本机 Codex CLI。页面同时显示执行过程、回答和生成产物。模块、接口、模型和 Skill 分类的实时维护状态见自动生成的 [PROJECT_STATUS.md](PROJECT_STATUS.md)。
 
 ## Skill Playground
 
@@ -81,5 +81,6 @@
 - `.runs/`、运行日志和临时上传目录不会提交到 Git。
 - 不将真实凭据写入 skill 文档、脚本、README、展示页或 Git 历史。
 - Playground 仅绑定 `127.0.0.1`，并只接受本页面来源的 JSON 任务请求。默认 CLI sandbox 为 `danger-full-access`，不要把该服务暴露到局域网或公网。
+- HTTP 服务只公开展示页和 `playground/static/` 静态资源；`.env`、`.git`、配置、Skill 源码和其他仓库文件不能通过静态 URL 读取。
 - Runner 只负责 Skill 选择、用户输入转发和 CLI 事件接收。需要改变输出格式或执行约束时，应修改对应 Skill，而不是在 Runner 中添加隐藏提示词。
 - 项目管理页不接收 PAT；push 认证只交给本机 Git Credential Manager。commit 只暂存用户勾选的安全文件，不执行 `git add -A`。

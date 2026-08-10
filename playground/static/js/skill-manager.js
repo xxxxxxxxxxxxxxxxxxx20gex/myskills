@@ -1,4 +1,5 @@
 import { deleteSkill, getSkillFile, getSkillTree, importSkill, moveSkill, skillExportUrl } from './api.js';
+import { groupFileTreeEntries } from './skill-file-tree.js';
 
 const categoryLabels = {
   office: '办公文档', visual: '图像演示', academic: '学术研究',
@@ -18,31 +19,76 @@ export function initializeSkillManager() {
   const fileTitle = document.getElementById('skill-file-title');
   let currentPath = '';
 
+  function renderTree(entries, skillPath) {
+    const childrenByParent = groupFileTreeEntries(entries);
+
+    function renderChildren(parent = '', depth = 0) {
+      const fragment = document.createDocumentFragment();
+      (childrenByParent.get(parent) || []).forEach(entry => {
+        if (entry.type === 'directory') {
+          const group = document.createElement('div');
+          group.className = 'file-tree-group';
+          const row = document.createElement('button');
+          row.type = 'button';
+          row.className = 'file-tree-row directory';
+          row.style.setProperty('--depth', String(depth));
+          row.setAttribute('aria-expanded', 'false');
+          row.title = `展开 ${entry.path}`;
+          const icon = document.createElement('span');
+          icon.className = 'file-tree-arrow';
+          icon.textContent = '▸';
+          const label = document.createElement('span');
+          label.textContent = entry.name;
+          const children = document.createElement('div');
+          children.className = 'file-tree-children';
+          children.hidden = true;
+          children.append(renderChildren(entry.path, depth + 1));
+          row.append(icon, label);
+          row.addEventListener('click', () => {
+            const expanded = row.getAttribute('aria-expanded') === 'true';
+            row.setAttribute('aria-expanded', String(!expanded));
+            row.title = `${expanded ? '展开' : '收起'} ${entry.path}`;
+            icon.textContent = expanded ? '▸' : '▾';
+            children.hidden = expanded;
+          });
+          group.append(row, children);
+          fragment.append(group);
+          return;
+        }
+
+        const row = document.createElement(entry.readable ? 'button' : 'div');
+        if (entry.readable) row.type = 'button';
+        row.className = `file-tree-row file${entry.readable ? ' readable' : ''}`;
+        row.style.setProperty('--depth', String(depth));
+        row.textContent = `${entry.readable ? '▤' : '·'} ${entry.name}`;
+        row.title = entry.readable ? entry.path : '二进制、大文件或敏感文件不可预览';
+        if (entry.readable) row.addEventListener('click', async () => {
+          tree.querySelectorAll('.file-tree-row.selected').forEach(item => item.classList.remove('selected'));
+          row.classList.add('selected');
+          fileTitle.textContent = entry.path;
+          preview.textContent = '正在加载…';
+          try {
+            const file = await getSkillFile(skillPath, entry.path);
+            preview.textContent = file.content;
+          } catch (error) {
+            preview.textContent = error.message;
+          }
+        });
+        fragment.append(row);
+      });
+      return fragment;
+    }
+
+    tree.replaceChildren(renderChildren());
+  }
+
   async function loadTree(path) {
     tree.textContent = '正在读取目录…';
     preview.textContent = '选择左侧文件查看内容。';
     fileTitle.textContent = '文件预览';
     try {
       const payload = await getSkillTree(path);
-      tree.replaceChildren(...payload.entries.map(entry => {
-        const row = document.createElement(entry.readable ? 'button' : 'div');
-        if (entry.readable) row.type = 'button';
-        row.className = `file-tree-row ${entry.type}${entry.readable ? ' readable' : ''}`;
-        row.style.setProperty('--depth', String(entry.path.split('/').length - 1));
-        row.textContent = `${entry.type === 'directory' ? '▸' : entry.readable ? '▤' : '·'} ${entry.name}`;
-        row.title = entry.readable ? entry.path : (entry.type === 'file' ? '二进制、大文件或敏感文件不可预览' : entry.path);
-        if (entry.readable) row.addEventListener('click', async () => {
-          fileTitle.textContent = entry.path;
-          preview.textContent = '正在加载…';
-          try {
-            const file = await getSkillFile(path, entry.path);
-            preview.textContent = file.content;
-          } catch (error) {
-            preview.textContent = error.message;
-          }
-        });
-        return row;
-      }));
+      renderTree(payload.entries, path);
     } catch (error) {
       tree.textContent = error.message;
     }

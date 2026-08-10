@@ -37,6 +37,7 @@ myskills/
 │           ├── attachment-prompt.js # 用户输入与可见附件路径的纯组合逻辑
 │           ├── conversation-state.js # 防止重复任务与旧轮询污染的纯状态模块
 │           ├── api.js         # Runner API 客户端
+│           ├── skill-file-tree.js # 文件树层级分组纯逻辑
 │           ├── artifacts.js   # 运行产物预览
 │           ├── markdown.js    # 安全 Markdown 回复渲染
 │           ├── resize.js      # 左右面板拖动缩放与宽度记忆

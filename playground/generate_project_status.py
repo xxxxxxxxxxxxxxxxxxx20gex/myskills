@@ -12,7 +12,8 @@ MODULES = [
     ("playground/static/styles.css", "样式系统", "负责响应式布局、卡片、文件浏览、对话、Git 操作反馈、日志和产物预览样式"),
     ("playground/static/js/data.js", "Skill 辅助数据", "维护已有 Skill 的展示别名、视觉样式和默认功能分类"),
     ("playground/static/js/catalog.js", "目录交互", "根据后端实际目录渲染分类、组合筛选、AI 分析结论和详情弹窗"),
-    ("playground/static/js/skill-manager.js", "Skill 文件管理", "提供 ZIP 导入、脱敏导出、标签/目录联动移动、可恢复删除、目录树和安全文本预览"),
+    ("playground/static/js/skill-manager.js", "Skill 文件管理", "提供 ZIP 导入、脱敏导出、标签/目录联动移动、可恢复删除、可展开目录树和安全文本预览"),
+    ("playground/static/js/skill-file-tree.js", "文件树数据", "将扁平文件清单整理为可展开的目录层级并稳定排序"),
     ("playground/static/js/api.js", "API 客户端", "封装配置、Skill 管理、AI 分析、任务和运行状态接口"),
     ("playground/static/js/artifacts.js", "产物渲染", "预览图片、音频、视频、HTML 和普通文件"),
     ("playground/static/js/markdown.js", "Markdown 渲染", "安全渲染标题、列表、引用、代码和外部链接，不执行原始 HTML"),
@@ -37,6 +38,7 @@ MODULES = [
     ("playground/tests/test_conversation_state.mjs", "前端状态回归测试", "验证重复任务拦截和旧对话代次失效逻辑"),
     ("playground/tests/test_attachments.mjs", "附件回归测试", "验证原始输入与一个或多个可见附件路径的组合格式"),
     ("playground/tests/test_catalog_data.mjs", "目录数据回归测试", "验证全部 Skill 的功能分类没有遗漏、重复或无效归属"),
+    ("playground/tests/test_skill_file_tree.mjs", "文件树回归测试", "验证目录层级、父子归属和根目录排序"),
 ]
 
 SKILL_GROUPS = [
@@ -110,7 +112,7 @@ def build_document(root: Path, config: dict[str, Any]) -> str:
         "└─ app.js",
         "   ├─ data.js + /api/skills（实际目录）",
         "   ├─ catalog.js ──> AI 分析 ──> skill-insights.yaml",
-        "   ├─ skill-manager.js ──> skill_service.py ──> Skill 目录 / .skill-trash",
+        "   ├─ skill-manager.js + skill-file-tree.js ──> skill_service.py ──> Skill 目录 / .skill-trash",
         "   ├─ ratings.js ──> rating_service.py ──> skill-metadata.yaml",
         "   ├─ git-panel.js ──> git_service.py ──> Git / GCM / origin",
         "   └─ chat.js",

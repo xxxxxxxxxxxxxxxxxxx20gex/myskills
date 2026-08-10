@@ -39,6 +39,22 @@ export const skillDetails = {
       "douyin-video-downloader": {name:"Douyin Video Downloader",icon:"▶",color:"orange",summary:"把公开可访问的抖音内容完整归档到本地标题目录，保留媒体文件和可追溯元数据。",capabilities:["视频、封面与图文素材下载","保存来源 URL、页面 HTML 与 README","保留原始 videoDetail JSON"],examples:["归档一个公开抖音视频链接","保存精选页中的视频和封面","建立可复查的本地素材目录"],outputs:["视频、封面和章节图片","HTML、README 与来源文件","原始结构化元数据"],notes:["仅处理公开可访问内容","页面结构变化可能影响下载","遵守平台规则和内容版权"],path:"自创skills/douyin-video-downloader"},
       "xiaohongshu-note-downloader": {name:"Xiaohongshu Note Downloader",icon:"▧",color:"orange",summary:"将公开小红书笔记的正文与媒体内容整理成便于备份和查阅的本地目录。",capabilities:["图文和视频笔记下载","页面 HTML 与来源链接保存","按笔记标题组织目录"],examples:["保存一篇公开图文笔记","归档包含视频的小红书内容","整理公开笔记的全部媒体素材"],outputs:["图片、视频和页面 HTML","来源链接与 README 元数据","标题命名的本地归档目录"],notes:["仅适用于公开链接","平台页面变化可能影响解析","使用时需尊重内容版权"],path:"自创skills/xiaohongshu-note-downloader"},
       "video-narration-tts": {name:"Video Narration TTS",icon:"♬",color:"orange",summary:"先分析视频实际画面和节奏，再重写中文旁白，生成自然语音并与原视频合成。",capabilities:["关键帧与画面顺序分析","旁白改写、分段和时长适配","Aliyun MaaS/Qwen TTS 与 MP4 合成"],examples:["为无声产品演示添加中文解说","替换与画面不匹配的原旁白","把幻灯片录屏制作成配音成片"],outputs:["带中文配音的 MP4","独立旁白音频","与画面对应的旁白文本"],notes:["需要 ALIYUN_MAAS_API_KEY 和 HOST","依赖 ffmpeg 完成音视频处理","模型与音色取决于端点权限"],path:"自创skills/video-narration-tts"},
-      "local-credential-memory": {name:"Local Credential Memory",icon:"⌑",color:"blue",summary:"在受当前 Windows 用户保护的本地 TOML 文档中维护敏感凭据；用户明确授权查看本机配置时，会主动发现、导入并立即用于当前任务。",capabilities:["保存、发现、导入、检索、更新和删除凭据","从授权的 config.toml、进程环境或 auth.json 解析路由与密钥","凭据库为空时自动创建，后续任务按条目最小化复用"],examples:["从 Codex 当前 provider 配置导入 API key 和 Base URL","使用已保存的 SSH 登录完成任务","更新或删除指定账号的密码"],outputs:["新增或更新的本地 credentials.toml 条目","脱敏的来源与保存字段确认","当前及后续授权任务中的安全凭据注入"],notes:["凭据文件是本地明文敏感数据","候选密钥冲突时只展示脱敏来源并请求选择","不会把秘密写入 Git、日志或回复"],path:"自创skills/local-credential-memory"},
+      "local-credential-memory": {name:"Local Credential Memory",icon:"⌑",color:"blue",summary:"在用户主目录下独立于 Codex 的本地 TOML 文档中维护敏感凭据；支持环境变量自定义路径，并能从用户授权的配置中发现和导入。",capabilities:["保存、发现、导入、检索、更新和删除凭据","从授权的 config.toml、进程环境或 auth.json 解析路由与密钥","凭据库为空时自动创建，后续任务按条目最小化复用"],examples:["从 Codex 当前 provider 配置导入 API key 和 Base URL","使用已保存的 SSH 登录完成任务","更新或删除指定账号的密码"],outputs:["新增或更新的本地 credentials.toml 条目","脱敏的来源与保存字段确认","当前及后续授权任务中的安全凭据注入"],notes:["默认路径为 ~/.local-credential-memory/credentials.toml","可用 LOCAL_CREDENTIAL_MEMORY_PATH 覆盖","不会把秘密写入 Git、日志或回复"],path:"自创skills/local-credential-memory"},
       "temporary-public-file-links": {name:"Temporary Public File Links",icon:"↗",color:"blue",summary:"为本地文件或目录生成短期可访问的公开 URL，适合解决附件不可见和跨设备查看问题。",capabilities:["上传单个文件或整个目录","生成短期公开访问链接","分享截图、报告、日志和生成媒体"],examples:["把本地截图发成临时链接","分享一个报告或压缩包","临时公开生成的视频或网页"],outputs:["一个或多个临时公开 URL","上传结果和有效期信息","必要时的目录压缩包"],notes:["链接内容在有效期内公开可访问","不要上传未获授权的敏感数据","服务可用性取决于配置的上传端点"],path:"自创skills/temporary-public-file-links"}
     };
+
+export const skillCategories = [
+  { id: 'office', label: '办公文档', description: '文档解析、编辑、表格与结构化交付', skills: ['mineru-to-markdown', 'docx', 'pdf', 'xlsx'] },
+  { id: 'visual', label: '图像演示', description: '图片、海报、幻灯片与视觉表达', skills: ['gpt-image', 'html-ppt-build', 'ppt-technical-redesign', 'codex-ppt-skill', 'dashiai-ppt', 'imagegen', 'canvas-design', 'frontend-slides', 'pptx', 'seedream'] },
+  { id: 'academic', label: '学术研究', description: '论文检索、官方资料与实时技术信息', skills: ['arxiv-search', 'semantic-scholar-search', 'openai-docs', 'technology-news-search', 'web-search'] },
+  { id: 'media', label: '内容媒体', description: '公开内容采集、音视频生成与处理', skills: ['douyin-video-downloader', 'xiaohongshu-note-downloader', 'video-narration-tts', 'films-search', 'music-search', 'remotion', 'seedance'] },
+  { id: 'development', label: '开发工具', description: '规划、开发、测试和 Skill 工程化', skills: ['professor-synapse', 'skill-creator', 'skill-installer', 'create-plan', 'develop-web-game', 'frontend-design', 'playwright'] },
+  { id: 'system', label: '系统效率', description: '凭据、邮件、日程、任务与文件协作', skills: ['local-credential-memory', 'temporary-public-file-links', 'imap-smtp-email', 'local-tools', 'scheduled-task'] },
+];
+
+const categoryBySkill = Object.fromEntries(
+  skillCategories.flatMap(category => category.skills.map(skill => [skill, category.id])),
+);
+
+repositorySkills.forEach(skill => { skill.category = categoryBySkill[skill.folder]; });
+Object.entries(skillDetails).forEach(([key, detail]) => { detail.category = categoryBySkill[key]; });

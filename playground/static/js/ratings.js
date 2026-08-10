@@ -10,7 +10,6 @@ function optionLabel(key) {
 }
 
 function paintCards() {
-  const filter = document.getElementById('rating-filter').value;
   document.querySelectorAll('[data-skill-path]').forEach(card => {
     const item = state.skills[card.dataset.skillPath];
     let badge = card.querySelector('.rating-badge');
@@ -22,8 +21,9 @@ function paintCards() {
     badge.textContent = item?.rating || '—';
     badge.title = item?.rating ? optionLabel(item.rating) : '未评分';
     badge.style.backgroundColor = item?.rating ? state.rating_levels[item.rating]?.color || '#65708a' : '#aab3c4';
-    card.hidden = filter === 'unrated' ? Boolean(item?.rating) : ratingKeys.includes(filter) ? item?.rating !== filter : false;
+    card.dataset.rating = item?.rating || '';
   });
+  document.dispatchEvent(new CustomEvent('catalog-rating-updated'));
 }
 
 function fillRatingSelect() {
@@ -51,7 +51,6 @@ function fillSettings() {
 }
 
 export async function initializeRatings() {
-  const filter = document.getElementById('rating-filter');
   const dialog = document.getElementById('rating-dialog');
   const feedback = document.getElementById('rating-feedback');
   try {
@@ -61,7 +60,6 @@ export async function initializeRatings() {
     feedback.textContent = error.message;
   }
 
-  filter.addEventListener('change', paintCards);
   document.getElementById('skill-dialog').addEventListener('skill-open', event => openSkill(event.detail.path));
   document.getElementById('save-skill-rating').addEventListener('click', async () => {
     if (!currentPath) return;

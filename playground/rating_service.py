@@ -108,3 +108,18 @@ class RatingService:
                 data["skills"].pop(normalized, None)
             self.save(data)
         return data
+
+    def move_skill(self, old_path: str, new_path: str) -> None:
+        old_path = old_path.replace("\\", "/").strip("/")
+        new_path = new_path.replace("\\", "/").strip("/")
+        if new_path not in self.valid_skill_paths():
+            raise ValueError("移动后的 Skill 路径无效")
+        with self.lock:
+            if not self.path.exists():
+                return
+            data = yaml.safe_load(self.path.read_text(encoding="utf-8-sig")) or {}
+            skills = data.get("skills") if isinstance(data.get("skills"), dict) else {}
+            if old_path in skills:
+                skills[new_path] = skills.pop(old_path)
+                data["skills"] = skills
+                self.save(data)

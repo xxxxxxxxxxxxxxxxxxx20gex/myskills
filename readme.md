@@ -1,86 +1,155 @@
-# 我的 Codex Skills
+# MySkills
 
-个人维护的 Codex skills 仓库。启动本地 Skill Playground 并访问 `http://127.0.0.1:8765`，可按维护状态浏览全部 skill，点击卡片查看详情，并把任务直接交给本机 Codex CLI。页面同时显示执行过程、回答和生成产物。模块、接口、模型和 Skill 分类的实时维护状态见自动生成的 [PROJECT_STATUS.md](PROJECT_STATUS.md)。
+个人维护的 Codex Skills 仓库，附带一个本地 Skill Playground。它可以浏览、筛选、评价和管理本地 Skills，调用 AI 生成结构化用途与风险结论，也可以把任务原样交给本机 Codex CLI 执行，并展示对话、运行日志和生成产物。
 
-## Skill Playground
+启动后访问：<http://127.0.0.1:8765/>
 
-页面右侧提供常驻多轮对话栏，可拖动中间分隔条调整宽度，并安全渲染助手回复中的 Markdown；左侧卡片在宽屏下一排最多 4 个，并随目录区域的实际宽度自动降为 3、2、1 列。对话栏可直接选择任意 skill，并切换 `gpt-5.6-terra`、`gpt-5.6-sol` 和 `deepseek-v4-flash`；模型下拉框同时显示名称和实际传给 Codex CLI 的模型 ID。Playground 自身不再模拟模型工具调用，而是通过 `codex exec --json` 把任务交给本机 Codex CLI；Codex 原生负责读取 `SKILL.md`、使用 Shell、网络、MCP、本机 skills 与其他可用工具。前端只负责发送任务、接收结构化执行事件、显示回答和 `.runs/` 中的生成产物。
+Skill 的当前分类、功能和测试状态以展示页面为准，README 不再维护容易过期的 Skill 数量与名单。
 
-为了能够测试 Skill 自身的原始行为，Runner 不添加输出格式、文件保存、自检、真实性检查或回答风格提示。下拉框选择只会被编码为 Codex 的显式 Skill 标记，例如 `$arxiv-search`；该标记之后的用户输入保持原样。仓库中的 Skills 在启动时通过被 Git 忽略的 `.agents/skills/` 符号链接注册给 Codex，链接直接指向原始 Skill 目录，不复制或改写 `SKILL.md`。
+## 环境要求
 
-1. 确认本机已安装并登录 Codex Desktop 或 Codex CLI。Runner 会优先自动发现 Codex Desktop 用户目录中的 CLI，也可在 `config.yaml` 中手动填写路径。
-2. 按需修改 `config.yaml` 中的模型、CLI sandbox、审批策略和服务端口。默认是面向本机个人环境的 `danger-full-access` 与 `never`，页面不会弹出终端审批。
-3. 仅当某个 skill 需要额外 API 凭据时，才将 `.env.example` 复制为 `.env` 并填写相应环境变量；Playground 自身使用 Codex 的本机配置和认证，不依赖该文件。
-4. 运行 `start-playground.ps1`。
-5. 浏览器打开 `http://127.0.0.1:8765`，在右侧“Skill 对话”栏选择 skill 后直接发送任务。
+- Windows 10/11 与 PowerShell 5.1 或更高版本。
+- Python 3.10 或更高版本，并可通过 `python` 命令调用。
+- 已安装并登录 Codex Desktop 或 Codex CLI。Playground 会优先自动发现 Codex Desktop 自带的 CLI，然后检查 VS Code 和系统 `PATH`。
+- 如需在页面中拉取或推送代码，还需要 Git；推荐安装 Git Credential Manager，并提前完成远程仓库登录。
 
-首次消息会创建一个 Codex session，后续消息用该 session 继续，因此多轮上下文由 Codex 原生维护。切换 skill 或点击“新对话”会创建新 session。执行日志来自 Codex JSONL 事件；图片、音频、视频、HTML 和其他文件只要保存到本次 `.runs/<run-id>/` 目录，就会显示在对应消息下。
+前端使用原生 HTML、CSS 和 ES Modules，不需要安装 Node.js、React、Vite，也没有前端构建步骤。
 
-页面还提供两组可持久化的维护功能：每个 Skill 可评为 A、B、C，填写备注并按等级筛选；三个等级的显示名称、说明和颜色也可在“等级设置”中自定义。数据统一保存到 `skill-metadata.yaml`，可和代码一起通过 Git 同步。
+## 安装
 
-“项目管理”面板可查看当前分支、origin、ahead/behind、本地文件状态和逐文件 Diff，也能检查远程更新、执行 `git pull --ff-only`，以及选择文件后一次完成 commit 和 push。文件默认不勾选，提交前会再次确认；敏感文件、运行产物和外部已暂存文件不能从网页提交。PAT 不需要也不允许填入网页：标准 Git 会直接复用本机 Git Credential Manager（GCM）中已有的 GitHub 凭据。若 GCM 尚未登录，应先在终端完成一次 GitHub 认证。
+克隆或下载仓库后，在 PowerShell 中进入项目目录：
 
-如果 GitHub 直连不可用，可在“项目管理”中填写本机 HTTP/SOCKS 混合代理端口。默认配置为 `127.0.0.1:7897`，端口写入 `config.yaml`；填写 `0` 可关闭。代理仅以临时 Git 参数作用于本 Playground 的 fetch、pull 和 push，不修改系统代理，也不写入全局或仓库级 Git 配置。
+```powershell
+cd C:\path\to\myskills
+```
 
-## 前端模块
+推荐创建独立的 Python 虚拟环境：
 
-前端使用浏览器原生 ES Modules，不需要 React、Vite 或构建命令：
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r .\playground\requirements.txt
+```
 
-| 模块 | 职责 |
+当前 Python 依赖只有 PyYAML。也可以不创建虚拟环境，启动脚本会使用当前 `python` 自动安装 `playground/requirements.txt` 中的依赖。
+
+如果 PowerShell 阻止激活脚本，可只对当前终端临时放开：
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\.venv\Scripts\Activate.ps1
+```
+
+## 配置
+
+主要配置位于 `config.yaml`：
+
+| 配置 | 用途 |
 |---|---|
-| `skills-showcase.html` | 页面语义结构和各分类的自创 Skill 卡片 |
-| `playground/static/styles.css` | 全部页面与响应式样式 |
-| `playground/static/js/data.js` | 自创、已测和待测 Skill 展示数据 |
-| `playground/static/js/catalog.js` | 分类标签、动态卡片和详情弹窗 |
-| `playground/static/js/api.js` | 本地 Runner HTTP API |
-| `playground/static/js/artifacts.js` | 图片、音频、视频、HTML 和文件预览 |
-| `playground/static/js/markdown.js` | 安全的助手 Markdown 回复渲染 |
-| `playground/static/js/resize.js` | 对话栏拖动缩放、键盘操作和宽度记忆 |
-| `playground/static/js/chat.js` | 对话、轮询、日志和 Codex session |
-| `playground/static/js/ratings.js` | Skill 评分、筛选和等级设置 |
-| `playground/static/js/git-panel.js` | Git 状态、Diff、拉取与 commit/push 界面 |
-| `playground/static/js/app.js` | 模块启动和依赖编排 |
-| `playground/rating_service.py` | 评分校验和 `skill-metadata.yaml` 持久化 |
-| `playground/git_service.py` | 受限 Git 操作和 GCM push 桥接 |
+| `server.host` / `server.port` | 本地服务监听地址和端口，默认 `127.0.0.1:8765` |
+| `agent.default_model` | 页面默认选择的模型 |
+| `codex_cli.path` | Codex CLI 路径；保持 `auto` 可自动发现 |
+| `codex_cli.sandbox` | Codex CLI 沙箱权限，例如 `workspace-write` 或 `danger-full-access` |
+| `codex_cli.approval_policy` | CLI 审批策略；网页执行无法弹出终端审批 |
+| `runs.directory` | 本地运行记录与产物目录，默认 `.runs` |
+| `git.proxy_port` | Playground Git 操作使用的代理端口；`0` 表示关闭 |
+| `models` | 页面可选模型及实际传给 Codex CLI 的模型 ID |
 
-运行 `python playground/generate_project_status.py` 可随时重新生成 `PROJECT_STATUS.md`；启动 Playground 时也会自动同步一次。
+默认配置适合受信任的个人电脑，CLI 使用 `danger-full-access` 和 `never`。如果希望限制文件写入范围，可将 `codex_cli.sandbox` 改为 `workspace-write`，但部分需要访问项目外文件或本机工具的 Skill 可能无法完整执行。
 
-## 目录状态
+Playground 本身使用 Codex 的本机认证，不要求 API key。只有所选 Skill 需要额外凭据时，才创建本地 `.env`：
 
-| 目录 | 数量 | 含义 |
-|---|---:|---|
-| `自创skills/` | 11 | 自主创建和定制，按自己的工作环境维护 |
-| `已测skills/` | 7 | 已经过实际使用或验证，可优先复用 |
-| `待测skills/` | 20 | 已收集，尚需验证依赖、兼容性或实际效果 |
+```powershell
+Copy-Item .env.example .env
+```
 
-## 自创 Skills
+然后填写该 Skill 需要的字段。`.env` 会传递给本机 Codex CLI 和子工具，但不会发送到浏览器，也已被 Git 忽略。不要在 README、Skill 文档或提交记录中填写真实密钥。
 
-- `arxiv-search`：检索 arXiv 论文、预印本、精确 ID 和 PDF 链接。
-- `douyin-video-downloader`：归档公开抖音视频、封面、图文和元数据。
-- `gpt-image`：通过 OpenAI-compatible Images API 生成、编辑和局部重绘图片。
-- `html-ppt-build`：将报告或 Markdown 制作成中文 HTML 技术 PPT，并导出 PPTX。
-- `local-credential-memory`：本地管理账号、密码、API key、SSH 和数据库凭据；用户授权查看本机配置时，可发现并导入凭据供后续直接复用。
-- `mineru-to-markdown`：将 PDF、Office、图片或网页转换为 Markdown。
-- `ppt-technical-redesign`：重构普通 PPT 的技术叙事、内容结构和视觉表达。
-- `semantic-scholar-search`：检索 Semantic Scholar 论文、作者、引用和参考文献。
-- `temporary-public-file-links`：为本地文件或目录创建临时公开链接。
-- `video-narration-tts`：根据视频画面改写旁白、生成中文 TTS 并合成 MP4。
-- `xiaohongshu-note-downloader`：归档公开小红书图文、视频和来源信息。
+## 启动
 
-## 已测 Skills
+在项目根目录运行：
 
-`codex-ppt-skill`、`dashiai-ppt`、`imagegen`、`openai-docs`、`professor-synapse`、`skill-creator`、`skill-installer`
+```powershell
+.\start-playground.ps1
+```
 
-## 待测 Skills
+脚本会安装 Python 依赖并启动服务。看到服务启动信息后，在浏览器打开：
 
-`canvas-design`、`create-plan`、`develop-web-game`、`docx`、`films-search`、`frontend-design`、`frontend-slides`、`imap-smtp-email`、`local-tools`、`music-search`、`pdf`、`playwright`、`pptx`、`remotion`、`scheduled-task`、`seedance`、`seedream`、`technology-news-search`、`web-search`、`xlsx`
+<http://127.0.0.1:8765/>
 
-## 安全约定
+如果只想手动启动：
 
-- `.env`、证书、私钥和 `secrets.*` 已被 Git 忽略；只提交脱敏的示例配置。`.env` 只向本机 Codex CLI 和子工具注入，不传给浏览器。
-- `.runs/`、运行日志和临时上传目录不会提交到 Git。
-- 不将真实凭据写入 skill 文档、脚本、README、展示页或 Git 历史。
-- Playground 仅绑定 `127.0.0.1`，并只接受本页面来源的 JSON 任务请求。默认 CLI sandbox 为 `danger-full-access`，不要把该服务暴露到局域网或公网。
-- HTTP 服务只公开展示页和 `playground/static/` 静态资源；`.env`、`.git`、配置、Skill 源码和其他仓库文件不能通过静态 URL 读取。
-- Runner 只负责 Skill 选择、用户输入转发和 CLI 事件接收。需要改变输出格式或执行约束时，应修改对应 Skill，而不是在 Runner 中添加隐藏提示词。
-- 项目管理页不接收 PAT；push 认证只交给本机 Git Credential Manager。commit 只暂存用户勾选的安全文件，不执行 `git add -A`。
+```powershell
+python -m pip install -r .\playground\requirements.txt
+python .\playground\server.py
+```
+
+停止服务时，在启动它的终端中按 `Ctrl+C`。
+
+## 使用
+
+### 浏览与评价 Skill
+
+- 使用顶部标签按“办公文档 / 图像演示 / 学术研究 / 内容媒体 / 开发工具 / 系统效率”浏览。
+- 来源、测试状态、评分和关键词可以组合筛选；“自创 / 已测 / 待测”仍是目录维护属性，不再作为功能分类。
+- 点击 Skill 卡片查看使用条件、解决的问题、使用场景、附件、最终结果和安全风险评估。
+- 安全风险评估只检查恶意代码、信息或凭据窃取、重大系统破坏以及明显或失控的资源占用；不会输出使用建议，也不会把版权、平台规则、正常联网或普通产物占用列为安全风险。
+- 点击“AI 分析”会调用当前选择的模型静态分析 Skill 文件，并把结论保存到 `skill-insights.yaml`；分析不会执行该 Skill。
+- 详情中的文件树可浏览目录并预览安全的文本文件；凭据、密钥、证书、二进制和大文件不会在页面中显示内容。
+- 可为每个 Skill 设置 A/B/C 评分和备注，也可以自定义等级名称、说明与颜色。
+- 评分数据保存在 `skill-metadata.yaml`，可随代码在不同设备间同步。
+
+### 管理 Skill 文件
+
+- 顶部“Skill 管理”支持从 ZIP 导入本地 Skill，并选择“自创 / 已测 / 待测”和功能分类。ZIP 根目录或唯一顶层目录必须包含 `SKILL.md`。
+- Skill 详情中的“导出”会生成 ZIP，并自动排除 `.env`、凭据、密钥、证书和缓存目录。
+- “删除”会把 Skill 移入本地 `.skill-trash/`，不会立即永久清除；需要时可以手动恢复。
+- Skill 详情中的“维护标签”可以在“自创 / 已测 / 待测”之间切换；更新后整个 Skill 目录会移动到对应文件夹，评分、备注、功能分类和 AI 分析结论同步迁移到新路径。
+- 导入和删除后页面会重新扫描实际目录，卡片和数量自动同步。
+
+### 执行 Skill
+
+1. 在右侧“Skill 对话”中选择 Skill 和模型。
+2. 输入任务；需要本地文件时可以点击“添加附件”多选文件，或直接把文件拖入输入区域。
+3. 点击“发送”。附件会保存到本地 `.runs/uploads/<conversation-id>/`，并以页面中可见的绝对路径附在用户消息后面。
+4. 页面只会添加 Codex 原生的 `$skill-name` 选择标记；用户输入及页面可见的附件路径会原样交给 Codex，不附加隐藏要求。
+5. 本机 Codex CLI 负责读取 `SKILL.md`、附件、调用工具并维护多轮 session。
+6. 回答以 Markdown 显示；运行产生的图片、音频、视频、HTML 和其他文件会显示在对应消息下。
+
+当前附件上传不限制文件类型、单文件大小或总大小；文件只保存在本机并已被 Git 忽略。
+
+点击“新对话”或切换 Skill 会创建新的 Codex session。拖动页面中间的分隔条可以调整右侧对话栏宽度。
+
+### 同步项目
+
+“项目管理”面板可以查看分支、远程同步状态、本地改动和逐文件 Diff，并执行：
+
+- 刷新本地状态。
+- 检查远程更新。
+- 在工作区干净时执行 `git pull --ff-only`。
+- 明确勾选文件后 commit，并立即 push 当前分支。
+- 设置只对 Playground Git 命令生效的本机代理端口。
+
+Push 凭据只由 Git Credential Manager 提供，页面不接收或保存 PAT。提交操作不会执行 `git add -A`，敏感文件、运行产物及已有外部暂存改动也不能从页面提交。
+
+## 文档职责
+
+- 当前 Skill 分类、功能、详情和评分：本地展示页面。
+- 模块、接口、模型和 Skill 目录状态：[PROJECT_STATUS.md](PROJECT_STATUS.md)（自动生成）。
+- 仓库结构、Skill 变更同步规则和安全边界：[AGENTS.md](AGENTS.md)。
+- 单个 Skill 的完整说明：对应目录中的 `SKILL.md`。
+
+修改模块或配置后，可手动刷新状态文档：
+
+```powershell
+python .\playground\generate_project_status.py
+```
+
+服务启动时也会自动执行一次同步。
+
+## 安全提示
+
+- Playground 仅适合本机使用。不要把 `127.0.0.1` 改为局域网或公网地址，除非已经额外实现认证和权限隔离。
+- `.env`、`.runs/`（包括上传附件）、`.skill-trash/`、日志、证书、私钥和 `secrets.*` 均不应进入 Git。
+- 默认 Codex CLI 权限较高，执行不熟悉的 Skill 前应先查看其详情和 `SKILL.md`。
+- Runner 只负责选择 Skill、转发用户原文和接收结果；需要改变输出规范时，应修改对应 Skill，而不是在 Runner 中加入隐藏提示词。

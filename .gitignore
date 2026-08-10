@@ -10,6 +10,8 @@ build/
 workspace/
 .runs/
 .agents/skills/
+.skill-trash/
+skill-import-*/
 playground-uploads/
 *.log
 *.pem

@@ -11,22 +11,27 @@
   <main class="catalog">
     <nav class="tabs" role="tablist" aria-label="技能分类">
       <button class="tab" type="button" role="tab" aria-selected="true" data-filter="all">全部 38</button>
-      <button class="tab" type="button" role="tab" aria-selected="false" data-filter="self">自创 11</button>
-      <button class="tab" type="button" role="tab" aria-selected="false" data-filter="tested">已测 7</button>
-      <button class="tab" type="button" role="tab" aria-selected="false" data-filter="pending">待测 20</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-filter="office">办公文档</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-filter="visual">图像演示</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-filter="academic">学术研究</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-filter="media">内容媒体</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-filter="development">开发工具</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-filter="system">系统效率</button>
       <div class="tab-tools">
-        <label for="rating-filter">评分</label>
-        <select id="rating-filter" class="rating-filter">
-          <option value="all">全部</option>
-          <option value="unrated">未评分</option>
-          <option value="A">A</option>
-          <option value="B">B</option>
-          <option value="C">C</option>
-        </select>
-        <button id="open-rating-settings" class="toolbar-button" type="button">等级设置</button>
-        <button id="open-git-panel" class="toolbar-button primary" type="button">项目管理</button>
+        <label class="filter-control" for="source-filter"><span>来源</span><select id="source-filter" class="catalog-filter"><option value="all">全部</option><option value="self">自创</option><option value="collected">收集</option></select></label>
+        <label class="filter-control" for="status-filter"><span>状态</span><select id="status-filter" class="catalog-filter"><option value="all">全部</option><option value="tested">已测</option><option value="pending">待测</option><option value="unclassified">未标注</option></select></label>
+        <label class="filter-control" for="rating-filter"><span>评分</span><select id="rating-filter" class="catalog-filter"><option value="all">全部</option><option value="unrated">未评分</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></label>
+        <label class="filter-control search-control" for="skill-search"><span>搜索</span><input id="skill-search" type="search" placeholder="名称、功能或 slug" autocomplete="off"></label>
+        <div class="filter-actions">
+          <button id="open-rating-settings" class="toolbar-button" type="button">等级设置</button>
+          <button id="open-skill-manager" class="toolbar-button" type="button">Skill 管理</button>
+          <button id="open-git-panel" class="toolbar-button primary" type="button">项目管理</button>
+        </div>
       </div>
     </nav>
+
+    <div id="catalog-sections"></div>
+    <p id="catalog-empty" class="catalog-empty" hidden>没有符合当前筛选条件的 Skill。</p>
 
     <section data-status-section="self">
       <div class="section-head"><h2>自创 · 图像与演示</h2><span>把内容变成可看、可讲、可交付的视觉成果</span></div>
@@ -91,10 +96,12 @@
     </div>
     <details id="log-box" class="chat-log-details" hidden><summary>查看本次运行日志</summary><pre id="run-logs" class="run-logs"></pre></details>
     <div class="chat-composer">
+      <input id="attachment-input" type="file" multiple hidden>
+      <div id="attachment-tray" class="attachment-tray" hidden></div>
       <textarea id="runner-prompt" aria-label="对话内容" placeholder="输入任务，Enter 发送，Shift + Enter 换行……"></textarea>
       <div class="composer-actions">
-        <p class="runner-note">网页仅负责收发；工具与环境由本机 Codex 执行，产物保存到 .runs。</p>
-        <button id="run-button" class="run-button" type="button">发送</button>
+        <p class="runner-note">附件保存到本机 .runs/uploads，并以可见路径交给 Codex。</p>
+        <div class="composer-buttons"><button id="attachment-button" class="toolbar-button" type="button">添加附件</button><button id="run-button" class="run-button" type="button">发送</button></div>
       </div>
     </div>
   </aside>
@@ -105,18 +112,25 @@
       <div class="dialog-head">
         <div class="dialog-title"><div id="dialog-icon" class="icon blue">✦</div><div><h2 id="dialog-name"></h2><p id="dialog-slug" class="dialog-slug"></p></div></div>
         <div class="dialog-actions">
+          <button id="dialog-analyze" class="toolbar-button analyze" type="button">AI 分析</button>
+          <button id="dialog-export" class="toolbar-button" type="button">导出</button>
+          <button id="dialog-delete" class="toolbar-button danger" type="button">删除</button>
           <button id="dialog-run-shortcut" class="dialog-run-shortcut" type="button">立即运行</button>
           <button id="dialog-close" class="close" type="button" aria-label="关闭">×</button>
         </div>
       </div>
       <div id="detail-panel">
         <p id="dialog-summary" class="detail-summary"></p>
+        <div class="analysis-status"><span id="analysis-meta"></span><span id="analysis-feedback" class="inline-feedback" aria-live="polite"></span></div>
         <div class="detail-grid">
-          <div class="detail-block"><h3>核心能力</h3><ul id="dialog-capabilities"></ul></div>
-          <div class="detail-block"><h3>典型请求</h3><ul id="dialog-examples"></ul></div>
-          <div class="detail-block"><h3>主要产出</h3><ul id="dialog-outputs"></ul></div>
-          <div class="detail-block"><h3>依赖与边界</h3><ul id="dialog-notes"></ul></div>
-          <div class="detail-block detail-wide"><h3>Skill 位置</h3><p id="dialog-path" class="path"></p></div>
+          <div class="detail-block"><h3>使用条件</h3><ul id="dialog-conditions"></ul></div>
+          <div class="detail-block"><h3>解决的问题</h3><ul id="dialog-problems"></ul></div>
+          <div class="detail-block"><h3>使用场景</h3><ul id="dialog-scenes"></ul></div>
+          <div class="detail-block"><h3>是否产生附件</h3><ul id="dialog-attachments"></ul></div>
+          <div class="detail-block"><h3>最终结果</h3><ul id="dialog-results"></ul></div>
+          <div class="detail-block risk-block"><h3>安全风险评估</h3><ul id="dialog-risks"></ul></div>
+          <div class="detail-block detail-wide"><h3>文件结构与内容</h3><div class="skill-files"><div id="skill-file-tree" class="skill-file-tree"></div><div class="skill-file-content"><strong id="skill-file-title">文件预览</strong><pre id="skill-file-preview">选择左侧文件查看内容。</pre></div></div></div>
+          <div class="detail-block detail-wide"><h3>维护标签与 Skill 位置</h3><div class="skill-location-editor"><label>维护标签<select id="skill-maintenance-label"><option value="self">自创</option><option value="tested">已测</option><option value="pending">待测</option></select></label><div><span>当前位置</span><p id="dialog-path" class="path"></p></div><button id="update-skill-label" class="toolbar-button" type="button">更新标签</button></div><p id="skill-location-feedback" class="inline-feedback" aria-live="polite"></p></div>
           <div class="detail-block detail-wide detail-rating">
             <h3>我的评分</h3>
             <div class="rating-editor">
@@ -128,6 +142,18 @@
           </div>
         </div>
       </div>
+    </div>
+  </dialog>
+  <dialog id="skill-manager-dialog" aria-labelledby="skill-manager-title">
+    <div class="dialog-inner">
+      <div class="dialog-head"><div><h2 id="skill-manager-title">导入 Skill</h2><p class="dialog-slug">导入后自动出现在目录中；导出和删除请在 Skill 详情中操作</p></div><button id="skill-manager-close" class="close" type="button" aria-label="关闭">×</button></div>
+      <div class="import-grid">
+        <label class="field"><span>ZIP 文件</span><input id="import-skill-file" type="file" accept=".zip,application/zip"></label>
+        <label class="field"><span>存放位置</span><select id="import-source"><option value="self">自创</option><option value="tested">已测</option><option value="pending">待测</option></select></label>
+        <label class="field"><span>功能分类</span><select id="import-category"></select></label>
+      </div>
+      <p class="security-note">ZIP 根目录或唯一的顶层目录中必须包含 SKILL.md。导入会拒绝 .env、密钥、证书、凭据和危险路径，不会覆盖同名 Skill。</p>
+      <div class="dialog-footer"><p id="skill-manager-feedback" class="inline-feedback" aria-live="polite"></p><button id="import-skill-button" class="run-button" type="button">导入 Skill</button></div>
     </div>
   </dialog>
   <dialog id="rating-dialog" aria-labelledby="rating-dialog-title">

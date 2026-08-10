@@ -1,5 +1,7 @@
 import { apiBase, createRun, getRun, getRunnerConfig } from './api.js';
+import { initializeAttachments } from './attachments.js';
 import { createArtifacts } from './artifacts.js';
+import { createConversationState } from './conversation-state.js';
 import { renderMarkdown } from './markdown.js';
 
 export function initializeChat(details, initialPath) {
@@ -14,13 +16,25 @@ export function initializeChat(details, initialPath) {
   const statusText = document.getElementById('runner-status-text');
   const logBox = document.getElementById('log-box');
   const runLogs = document.getElementById('run-logs');
+  const attachmentInput = document.getElementById('attachment-input');
+  const attachmentButton = document.getElementById('attachment-button');
+  const attachmentTray = document.getElementById('attachment-tray');
+  const composer = document.querySelector('.chat-composer');
   const detailByPath = Object.fromEntries(details.map(detail => [detail.path, detail]));
+  const conversation = createConversationState();
 
   let activeDetail = null;
   let pollTimer = null;
   let runnerConnected = false;
   let runnerConfigured = false;
   let codexSessionId = '';
+  let conversationUploadId = crypto.randomUUID();
+  const attachments = initializeAttachments({
+    input: attachmentInput,
+    button: attachmentButton,
+    tray: attachmentTray,
+    dropZone: composer,
+  });
 
   runnerSkill.replaceChildren(...details.map(detail => {
     const option = document.createElement('option');
@@ -34,23 +48,28 @@ export function initializeChat(details, initialPath) {
     statusText.textContent = text;
   }
 
-  function setRunning(running) {
+  function renderRunning(running) {
     runButton.disabled = running || !runnerConnected || !runnerConfigured;
     runnerSkill.disabled = running;
     runnerModel.disabled = running;
     newChatButton.disabled = running;
+    attachments.setDisabled(running);
     runButton.textContent = running ? '执行中…' : '发送';
   }
 
-  function resetConversation(seedPrompt = true) {
+  function resetConversation() {
     codexSessionId = '';
+    conversationUploadId = crypto.randomUUID();
+    conversation.reset();
     if (pollTimer) window.clearTimeout(pollTimer);
     pollTimer = null;
     chatMessages.querySelectorAll('.message').forEach(item => item.remove());
     chatEmpty.hidden = false;
     logBox.hidden = true;
     runLogs.textContent = '';
-    if (seedPrompt && activeDetail) runnerPrompt.value = activeDetail.examples[0] || '';
+    runnerPrompt.value = '';
+    attachments.reset();
+    renderRunning(false);
     setRunnerStatus(
       runnerConfigured ? 'ready' : 'failed',
       runnerConfigured ? '可以开始对话' : '服务已连接，但未找到 Codex CLI',
@@ -84,7 +103,7 @@ export function initializeChat(details, initialPath) {
       runnerModel.replaceChildren(...config.models.map(model => {
         const option = document.createElement('option');
         option.value = model.id;
-        option.textContent = `${model.label} · ${model.api_model}`;
+        option.textContent = model.label;
         option.selected = model.id === config.default_model;
         return option;
       }));
@@ -103,17 +122,19 @@ export function initializeChat(details, initialPath) {
     }
   }
 
-  async function pollRun(runId) {
+  async function pollRun(runId, token) {
     try {
       const run = await getRun(runId);
+      if (!conversation.isCurrent(token)) return;
       logBox.hidden = false;
       runLogs.textContent = (run.logs || []).join('\n');
       if (run.status === 'running') {
         setRunnerStatus('running', '智能体正在执行……');
-        pollTimer = window.setTimeout(() => pollRun(runId), 900);
+        pollTimer = window.setTimeout(() => pollRun(runId, token), 900);
         return;
       }
-      setRunning(false);
+      conversation.finish(token);
+      renderRunning(false);
       if (run.status === 'completed') {
         codexSessionId = run.session_id || codexSessionId;
         setRunnerStatus('ready', '等待你的下一条消息');
@@ -123,34 +144,41 @@ export function initializeChat(details, initialPath) {
         appendMessage('assistant', `执行失败：${run.error || '未知错误'}`);
       }
     } catch (error) {
-      setRunning(false);
+      if (!conversation.finish(token)) return;
+      renderRunning(false);
       setRunnerStatus('failed', error.message);
       appendMessage('assistant', `连接执行服务失败：${error.message}`);
     }
   }
 
   async function sendPrompt() {
-    if (!activeDetail || !runnerConnected) return;
+    if (!activeDetail || !runnerConnected || !runnerConfigured || conversation.running) return;
     const prompt = runnerPrompt.value;
-    if (!prompt.trim()) {
+    if (!prompt.trim() && !attachments.hasFiles()) {
       runnerPrompt.focus();
-      setRunnerStatus('failed', '请先输入任务内容');
+      setRunnerStatus('failed', '请输入任务内容或添加附件');
       return;
     }
-    appendMessage('user', prompt);
-    runnerPrompt.value = '';
-    setRunning(true);
-    setRunnerStatus('running', '正在创建智能体任务……');
+    const token = conversation.begin();
+    if (token === null) return;
+    renderRunning(true);
+    setRunnerStatus('running', attachments.hasFiles() ? '正在上传本地附件……' : '正在创建智能体任务……');
     try {
+      const composedPrompt = await attachments.uploadAndCompose(prompt, conversationUploadId);
+      appendMessage('user', composedPrompt);
+      runnerPrompt.value = '';
+      setRunnerStatus('running', '正在创建智能体任务……');
       const run = await createRun({
         skill: activeDetail.path,
-        prompt,
+        prompt: composedPrompt,
         model: runnerModel.value,
         sessionId: codexSessionId,
       });
-      pollRun(run.id);
+      if (!conversation.isCurrent(token)) return;
+      pollRun(run.id, token);
     } catch (error) {
-      setRunning(false);
+      if (!conversation.finish(token)) return;
+      renderRunning(false);
       setRunnerStatus('failed', error.message);
       appendMessage('assistant', `创建任务失败：${error.message}`);
     }
@@ -161,7 +189,7 @@ export function initializeChat(details, initialPath) {
     if (!activeDetail) return;
     runnerSkill.value = activeDetail.path;
     runnerPrompt.placeholder = `向 ${activeDetail.name} 描述任务，Enter 发送……`;
-    if (reset) resetConversation(true);
+    if (reset) resetConversation();
     runnerPrompt.focus();
   }
 

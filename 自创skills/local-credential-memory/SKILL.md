@@ -5,17 +5,18 @@ description: Store, discover, import, find, update, and delete the user's sensit
 
 # Local Credential Memory
 
-Maintain exactly one credential document:
+Resolve one active credential document at the start of each credential task:
 
-```text
-C:\Users\WUJIEAI\.codex\credentials.toml
-```
+1. If `LOCAL_CREDENTIAL_MEMORY_PATH` is set and non-empty, expand environment variables and `~`, then use that file.
+2. Otherwise use `~/.local-credential-memory/credentials.toml`.
+
+On Windows, the default normally resolves to `%USERPROFILE%\.local-credential-memory\credentials.toml`. Keep the credential store under the user's home directory and independent of Codex, a specific project, or a repository.
 
 Use this skill only for credentials and secrets. Do not store general preferences, project notes, troubleshooting, plans, or ordinary machine facts.
 
 ## Security rules
 
-- Treat the document as plaintext sensitive data even though access is restricted to the current Windows user.
+- Treat the document as plaintext sensitive data. Keep its parent directory accessible only to the current user where the operating system supports permission controls.
 - Never print, summarize, log, or quote the whole document.
 - Read only the entry needed for the current authorized task.
 - In normal responses, identify a credential by entry name and redact secret values. Reveal a raw secret only when the user explicitly asks to see that specific value.
@@ -37,9 +38,9 @@ Treat instructions such as the following as explicit authorization to inspect th
 
 For Codex provider credentials, inspect only the narrow sources needed, normally:
 
-1. `C:\Users\WUJIEAI\.codex\config.toml` for the active provider, `base_url`, protocol, and referenced environment variable names.
+1. `${CODEX_HOME}/config.toml` when `CODEX_HOME` is set, otherwise `~/.codex/config.toml`, for the active provider, `base_url`, protocol, and referenced environment variable names.
 2. The current process environment for an explicitly referenced variable such as `OPENAI_API_KEY`.
-3. `C:\Users\WUJIEAI\.codex\auth.json` when the provider uses Codex/OpenAI authentication and the required value is not already resolved from the active source.
+3. `${CODEX_HOME}/auth.json` when `CODEX_HOME` is set, otherwise `~/.codex/auth.json`, when the provider uses Codex/OpenAI authentication and the required value is not already resolved from the active source.
 
 Do not print raw values while discovering them. Report only source presence, redacted identity, or a short fingerprint when comparison is necessary.
 
@@ -67,7 +68,7 @@ host = "example.com"
 port = 22
 username = "deploy"
 password = "..."
-private_key_path = "C:\\Users\\WUJIEAI\\.ssh\\id_ed25519"
+private_key_path = "~/.ssh/id_ed25519"
 notes = "Use key authentication when available"
 updated_at = "YYYY-MM-DD"
 
@@ -110,4 +111,4 @@ Delete only the specifically requested table or field. Confirm the exact target 
 
 ## Legacy data
 
-Older memory may remain under `C:\Users\WUJIEAI\.codex-local-memory`. Do not add new data there. Do not read or migrate its secret values unless the user explicitly requests migration; the single active document for all new credential operations is `C:\Users\WUJIEAI\.codex\credentials.toml`.
+Older credentials may remain in `~/.codex/credentials.toml` or `~/.codex-local-memory`. Do not add new data there. Do not read, copy, or migrate their secret values unless the user explicitly requests reuse or migration. All new credential operations use the resolved active document, which defaults to `~/.local-credential-memory/credentials.toml`.

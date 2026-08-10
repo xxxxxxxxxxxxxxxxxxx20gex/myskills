@@ -1,0 +1,35 @@
+version: 1
+skills:
+  自创skills/douyin-video-downloader:
+    analysis:
+      usage_conditions:
+      - 用户提供公开可访问的 douyin.com 精选页、视频页或分享链接
+      - 用户希望将抖音视频内容下载、保存、归档、测试或整理到本地
+      - 需要可写入的目标输出目录；未指定时使用脚本默认目录
+      - 目标页面需暴露可解析的 PC 端 SSR React Flight `videoDetail` 数据
+      problems_solved:
+      - 将公开抖音页面中的视频、封面和章节图片集中保存到本地
+      - 按视频标题创建避免冲突的本地归档目录
+      - 生成可离线打开的 HTML 浏览页及原始元数据记录
+      use_cases:
+      - 归档一个公开抖音视频及其相关媒体
+      - 将视频链接整理成带封面、章节图和说明的本地资料包
+      - 测试指定抖音链接是否能从页面 SSR 数据中提取视频详情
+      - 保存视频来源链接、Aweme ID、描述和原始 `videoDetail` JSON以便后续查阅
+      attachments:
+        produces: 'yes'
+        types:
+        - MP4 视频文件
+        - JPG 或其他图片格式的封面与章节图片
+        - HTML 本地浏览页
+        - Markdown README
+        - TXT 来源链接文件
+        - JSON 元数据文件
+        notes: 每个视频生成一个以标题命名的目录；视频或图片字段缺失时，相应媒体附件可能不会生成。
+      final_results:
+      - 一个按标题命名的视频本地目录
+      - 可直接在浏览器打开并引用本地媒体的 `index.html`
+      - 视频下载状态、文件大小、封面数量和章节图片数量
+      - 包含来源 URL、说明、Aweme ID 与原始视频详情的归档记录
+      model: gpt-5.6-terra
+      updated_at: 2026-08-10T14:29:46+0800

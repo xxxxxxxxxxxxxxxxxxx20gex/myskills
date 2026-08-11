@@ -14,6 +14,7 @@ export const repositorySkills = [
       {status:"pending",folder:"films-search",name:"films-search",title:"Films Search",summary:"搜索可下载的电影、电视剧与动漫网盘资源；不用于影讯、评价或推荐。",headings:["前置条件","命令","Agent 使用流程","输出格式","配置","注意事项","免责声明"]},
       {status:"pending",folder:"frontend-design",name:"frontend-design",title:"Frontend Design",summary:"创建具有明确视觉风格的生产级前端页面、组件、海报、仪表盘和 Web 应用。",headings:["Design Thinking","Frontend Aesthetics Guidelines"]},
       {status:"pending",folder:"frontend-slides",name:"frontend-slides",title:"Frontend Slides",summary:"从零创建动画丰富的 HTML 演示，或将 PPT/PPTX 转换为适合浏览器播放的幻灯片。",headings:["Core Principles","Design Aesthetics","Viewport Fitting Rules","Detect Mode","Content Discovery","Style Discovery","Generate Presentation","PPT Conversion"]},
+      {status:"pending",folder:"grill-me",name:"grill-me",title:"Grill Me",summary:"通过每次一个问题的追问，逐步澄清计划、产品需求、设计、决策与实施依赖。",headings:["Grill Me","Workflow"]},
       {status:"pending",folder:"imap-smtp-email",name:"imap-smtp-email",title:"IMAP / SMTP Email",summary:"通过 IMAP/SMTP 读取、搜索、标记和发送邮件，支持附件及常见邮箱服务。",headings:["Configuration","Common Email Servers","IMAP Commands","SMTP Commands","Dependencies","Security Notes","Troubleshooting"]},
       {status:"pending",folder:"local-tools",name:"local-tools",title:"Local Tools",summary:"访问本机系统资源，目前主要用于在 macOS 和 Windows 上管理日历与日程。",headings:["When to Use This Skill","How It Works","Platform Support","Permissions","Calendar Operations","Output Format","Date Format Guidelines","Common Patterns"]},
       {status:"pending",folder:"music-search",name:"music-search",title:"Music Search",summary:"搜索可下载的歌曲、专辑和无损音频网盘资源；不用于歌词或音乐推荐。",headings:["前置条件","命令","Agent 使用流程","输出格式","配置","注意事项","免责声明"]},
@@ -22,6 +23,8 @@ export const repositorySkills = [
       {status:"pending",folder:"pptx",name:"pptx",title:"PPTX",summary:"创建、编辑和分析 PowerPoint，支持布局、批注、演讲者备注、模板和缩略图检查。",headings:["Overview","Reading and analyzing content","Creating without a template","Editing an existing presentation","Creating using a template","Creating Thumbnail Grids","Converting Slides to Images","Code Style Guidelines"]},
       {status:"pending",folder:"remotion",name:"remotion-best-practices",title:"Remotion Best Practices",summary:"提供使用 React 和 Remotion 创建视频时的工程与实现最佳实践。",headings:["When to use","Captions","How to use"]},
       {status:"pending",folder:"scheduled-task",name:"scheduled-task",title:"Scheduled Task",summary:"创建和管理一次性或周期性定时任务，支持查看、修改、启停和删除。",headings:["核心原则","使用场景","管理已有任务","创建新任务","重要注意事项"]},
+      {status:"pending",folder:"thesis-aigc-rewrite",name:"thesis-aigc-rewrite",title:"Thesis AIGC Rewrite",summary:"将 PaperPass 等报告标记段落映射回权威 DOCX，仅改写高疑似内容并保护技术事实与版式。",headings:["中文论文 AIGC 降重","前置材料：先向用户说明","必须配合的能力","工作流程","改写约束","映射与置信度规则","资源使用"]},
+      {status:"pending",folder:"thesis-format-normalize",name:"thesis-format-normalize",title:"Thesis Format Normalize",summary:"审计并规范中文毕业论文或学位论文的页面、标题、段落、图表、引用与参考文献格式。",headings:["中文毕业论文格式规范化","必须配合的能力","输入与规范优先级","工作模式","审查与修改流程","不得省略的安全规则","资源使用"]},
       {status:"pending",folder:"seedance",name:"seedance",title:"Seedance",summary:"使用火山引擎 Seedance 生成视频，支持文生视频、图生视频和音频同步。",headings:["配置","前置检查","工作流程","配额和限制","使用示例","参数说明","模型选择","高级选项"]},
       {status:"pending",folder:"seedream",name:"seedream",title:"Seedream",summary:"使用火山引擎 Seedream 生成或编辑图片，支持文生图、图生图、多图融合和联网生成。",headings:["配置","前置检查","工作流程","配额和限制","使用示例","参数说明","模型选择","高级选项"]},
       {status:"pending",folder:"technology-news-search",name:"technology-search",title:"Technology News Search",summary:"搜索科技博客、开发者论坛和 IT 媒体，按热度整理软硬件、AI 与基础设施动态并支持中英互译。",headings:["Overview","Smart Source Routing","Supported Technical Domains","Quick Start","Workflow","Source Balancing","Output Format","Hot News"]},
@@ -45,11 +48,11 @@ export const skillDetails = {
     };
 
 export const skillCategories = [
-  { id: 'office', label: '办公文档', description: '文档解析、编辑、表格与结构化交付', skills: ['mineru-to-markdown', 'docx', 'pdf', 'xlsx'] },
+  { id: 'office', label: '办公文档', description: '文档解析、编辑、表格与结构化交付', skills: ['mineru-to-markdown', 'docx', 'pdf', 'xlsx', 'thesis-aigc-rewrite', 'thesis-format-normalize'] },
   { id: 'visual', label: '图像演示', description: '图片、海报、幻灯片与视觉表达', skills: ['gpt-image', 'html-ppt-build', 'ppt-technical-redesign', 'codex-ppt-skill', 'dashiai-ppt', 'imagegen', 'canvas-design', 'frontend-slides', 'pptx', 'seedream'] },
   { id: 'academic', label: '学术研究', description: '论文检索、官方资料与实时技术信息', skills: ['arxiv-search', 'semantic-scholar-search', 'openai-docs', 'technology-news-search', 'web-search'] },
   { id: 'media', label: '内容媒体', description: '公开内容采集、音视频生成与处理', skills: ['douyin-video-downloader', 'xiaohongshu-note-downloader', 'video-narration-tts', 'films-search', 'music-search', 'remotion', 'seedance'] },
-  { id: 'development', label: '开发工具', description: '规划、开发、测试和 Skill 工程化', skills: ['professor-synapse', 'skill-creator', 'skill-installer', 'create-plan', 'develop-web-game', 'frontend-design', 'playwright'] },
+  { id: 'development', label: '开发工具', description: '规划、开发、测试和 Skill 工程化', skills: ['professor-synapse', 'skill-creator', 'skill-installer', 'create-plan', 'develop-web-game', 'frontend-design', 'playwright', 'grill-me'] },
   { id: 'system', label: '系统效率', description: '凭据、项目、邮件、日程、任务与文件协作', skills: ['manage-myskills', 'local-credential-memory', 'temporary-public-file-links', 'imap-smtp-email', 'local-tools', 'scheduled-task'] },
 ];
 

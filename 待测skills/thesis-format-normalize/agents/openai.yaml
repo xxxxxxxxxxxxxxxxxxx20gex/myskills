@@ -1,0 +1,4 @@
+interface:
+  display_name: "中文毕业论文规范化"
+  short_description: "检查并规范论文版式、引文、图表、目录和参考文献"
+  default_prompt: "使用 $thesis-format-normalize，依据我提供的学校模板检查并规范毕业论文格式；先审查，只有我明确要求时再修改主 DOCX。"

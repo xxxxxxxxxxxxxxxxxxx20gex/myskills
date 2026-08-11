@@ -1,0 +1,4 @@
+interface:
+  display_name: "Grill Me"
+  short_description: "Interview deeply to resolve requirements and decisions"
+  default_prompt: "Use $grill-me to interview me one question at a time until the requirements are fully resolved."

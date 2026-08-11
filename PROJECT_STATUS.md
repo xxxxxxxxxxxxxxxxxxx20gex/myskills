@@ -36,8 +36,8 @@
 | `playground/run_registry.py` | 运行记录 | 正常 | 2,143 B | — | 以线程安全快照保存有限数量的运行状态、日志和产物元数据 |
 | `playground/rating_service.py` | 评分服务 | 正常 | 4,599 B | — | 校验并原子更新可进入 Git 的 skill-metadata.yaml |
 | `playground/git_service.py` | Git 服务 | 正常 | 10,907 B | — | 执行白名单 Git 参数、保护敏感文件并通过 GCM 推送 |
-| `skill-metadata.yaml` | 维护数据 | 正常 | 429 B | — | 保存 A/B/C 显示设置、Skill 评分和备注，随 Git 同步 |
-| `skill-insights.yaml` | AI 分析数据 | 正常 | 1,845 B | — | 保存功能分类、用途结论和仅针对恶意行为/信息窃取/系统破坏/重大资源占用的安全评估 |
+| `skill-metadata.yaml` | 维护数据 | 正常 | 588 B | — | 保存 A/B/C 显示设置、Skill 评分和备注，随 Git 同步 |
+| `skill-insights.yaml` | AI 分析数据 | 正常 | 6,896 B | — | 保存功能分类、用途结论和仅针对恶意行为/信息窃取/系统破坏/重大资源占用的安全评估 |
 | `playground/generate_project_status.py` | 状态文档生成器 | 正常 | 11,135 B | — | 扫描模块、配置与 Skill 目录并更新本文件 |
 | `playground/tests/test_run_registry.py` | 后端回归测试 | 正常 | 1,710 B | — | 验证运行记录隔离、清理和活动任务保留逻辑 |
 | `playground/tests/test_skill_service.py` | Skill 目录回归测试 | 正常 | 3,283 B | — | 验证目录扫描、分析输入凭据过滤和分析结果持久化 |

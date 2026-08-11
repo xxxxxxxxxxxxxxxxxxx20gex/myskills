@@ -33,3 +33,96 @@ skills:
       - 包含来源 URL、说明、Aweme ID 与原始视频详情的归档记录
       model: gpt-5.6-terra
       updated_at: 2026-08-10T14:29:46+0800
+  已测skills/dashiai-ppt:
+    analysis:
+      usage_conditions:
+      - 用户需要将演示目标生成可编辑的 HTML 演示文稿时触发
+      - 需要提供明确的演示目标或内容需求
+      problems_solved:
+      - 将演示需求转换为可编辑的 HTML 幻灯片页面
+      use_cases:
+      - 根据汇报、讲解或展示目标制作 HTML 演示文稿
+      - 生成可继续编辑调整的演示文稿初稿
+      attachments:
+        produces: conditional
+        types:
+        - HTML 演示文稿文件
+        notes: 描述表明该 Skill 用于生成可编辑的 HTML presentation deck。
+      final_results:
+      - 可编辑的 HTML 演示文稿
+      risk_assessment:
+        level: low
+        summary: 未发现明确的恶意、信息窃取、系统破坏或重大资源滥用行为。
+        risks:
+        - 未发现明确安全风险
+      model: gpt-5.6-terra
+      updated_at: 2026-08-10T15:15:44+0800
+  已测skills/professor-synapse:
+    analysis:
+      usage_conditions:
+      - 用户需要专家协助、希望召唤某领域专家、寻求指导，或任务需要领域专业知识时触发
+      - 需要先了解用户目标与背景；对复杂且存在权衡的决策，可组织多个专家视角
+      - 创建新的领域专家前，需要提供待覆盖的领域或主题；领域研究代理会收集当前资料
+      problems_solved:
+      - 为用户任务匹配、召唤或创建合适的领域专家
+      - 通过多专家讨论梳理复杂决策中的共识、分歧与取舍
+      - 为新专家代理收集领域最佳实践、术语、常见需求与反模式
+      - 维护专家代理索引、模板、经验模式及技能打包流程
+      use_cases:
+      - 用户需要软件开发、数据分析、产品、设计、研究等领域专家协助
+      - 用户需要在 REST 与 GraphQL、性能与可维护性等多维取舍中做决策
+      - 现有代理不覆盖某个新领域，需要研究后创建对应专家代理
+      - 用户修改专家代理、脚本或参考资料后，需要重建并打包技能
+      attachments:
+        produces: conditional
+        types:
+        - Markdown 专家代理文件
+        - Markdown 代理索引
+        - 技能包文件（.skill）
+        notes: 仅在创建或修改代理、索引或技能结构并完成打包流程时产生文件产物。
+      final_results:
+      - 获得与任务匹配的单个领域专家回应，或由多个专家视角综合出的可执行建议
+      - 获得新建或更新的专家代理定义及已更新的代理索引
+      - 在发生技能文件变更时获得可供安装替换的 Professor Synapse 技能包
+      risk_assessment:
+        level: low
+        summary: 未发现明确的恶意、信息窃取、系统破坏或重大资源滥用行为。
+        risks:
+        - 未发现明确安全风险
+      model: gpt-5.6-terra
+      updated_at: 2026-08-11T13:31:15+0800
+  待测skills/local-tools:
+    analysis:
+      usage_conditions:
+      - 当需要直接管理用户本机日历时触发，包括查看、创建、更新、删除或搜索日历事件
+      - 需运行在 macOS 或 Windows；macOS 需要 Calendar.app 与日历访问权限，Windows 需要已安装并可访问的 Microsoft
+        Outlook
+      - 查看可选时间范围；创建需标题、开始时间和结束时间；更新或删除需事件 ID；搜索需关键词
+      - 日期时间输入应为本地时区的 ISO 8601 格式
+      problems_solved:
+      - 读取指定时间段内的日程并返回结构化事件信息
+      - 在本地日历中新建、修改和删除事件
+      - 按标题、备注或地点关键词查找日历事件
+      - 支持在未指定日历时使用默认日历，搜索可覆盖可访问的日历
+      use_cases:
+      - 查询今天、明天或未来七天的日程
+      - 创建包含地点和备注的会议或提醒
+      - 先搜索“项目”或“meeting”等关键词以定位事件
+      - 根据事件 ID 调整会议标题、时间、地点或备注
+      - 删除指定的本地日历事件
+      - 根据某个下午的已有日程判断空闲时间
+      attachments:
+        produces: 'no'
+        types: []
+        notes: 脚本输出 JSON 结构化结果，不生成文件附件。
+      final_results:
+      - 包含事件 ID、标题、起止时间、地点、备注、日历名称及数量的 JSON 查询或搜索结果
+      - 本地日历事件已创建、更新或删除的成功结果
+      - 权限、输入缺失、Outlook 不可用或平台不支持时的结构化错误结果
+      risk_assessment:
+        level: low
+        summary: 未发现明确的恶意、信息窃取、系统破坏或重大资源滥用行为；脚本仅在用户请求的日历操作中读取、创建、修改或删除日历事件。
+        risks:
+        - 未发现明确安全风险
+      model: gpt-5.6-terra
+      updated_at: 2026-08-11T13:33:21+0800

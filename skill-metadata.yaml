@@ -16,3 +16,7 @@ skills:
     rating: A
     note: ''
     updated_at: '2026-08-07T08:34:19+08:00'
+  已测skills/dashiai-ppt:
+    rating: A
+    note: 有点费token并且需要搭配一个生图的工具skill
+    updated_at: '2026-08-11T13:39:01+08:00'

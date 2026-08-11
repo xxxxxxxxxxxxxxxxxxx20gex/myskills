@@ -58,6 +58,8 @@ LOCAL_ENV = load_env(ENV_PATH)
 RUNS_ROOT = (ROOT / CONFIG["runs"]["directory"]).resolve()
 RUNS_ROOT.mkdir(parents=True, exist_ok=True)
 RUNS = RunRegistry(max_records=200, storage_path=RUNS_ROOT / "registry.json")
+RUN_PROCESSES: dict[str, subprocess.Popen[str]] = {}
+RUN_PROCESSES_LOCK = threading.RLock()
 UPLOADS_ROOT = RUNS_ROOT / "uploads"
 UPLOADS_ROOT.mkdir(parents=True, exist_ok=True)
 RATINGS = RatingService(ROOT, SKILL_FOLDERS)
@@ -240,6 +242,59 @@ def add_log(run_id: str, message: str) -> None:
     RUNS.append_log(run_id, redact(message))
 
 
+def terminate_process_tree(process: subprocess.Popen[str]) -> None:
+    if process.poll() is not None:
+        return
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=10,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+
+
+def cancel_run(run_id: str) -> dict[str, Any]:
+    run = RUNS.snapshot(run_id)
+    if not run:
+        raise FileNotFoundError("运行记录不存在")
+    if run.get("status") != "running":
+        return {"id": run_id, "status": run.get("status", "unknown"), "changed": False}
+    if not run.get("cancel_requested"):
+        RUNS.update(run_id, cancel_requested=True)
+        add_log(run_id, "收到用户停止请求")
+    with RUN_PROCESSES_LOCK:
+        process = RUN_PROCESSES.get(run_id)
+    if process is not None:
+        terminate_process_tree(process)
+    return {"id": run_id, "status": "canceling", "changed": True}
+
+
+def finish_canceled_run(run_id: str, run_dir: Path | None = None) -> None:
+    run = RUNS.snapshot(run_id)
+    if not run or run.get("status") == "canceled":
+        return
+    add_log(run_id, "任务已由用户停止")
+    artifacts = artifact_list(run_id, run_dir) if run_dir is not None and run_dir.is_dir() else []
+    set_run(
+        run_id,
+        status="canceled",
+        result="任务已停止。",
+        artifacts=artifacts,
+        error="",
+        finished_at=time.time(),
+    )
+
+
 def artifact_list(run_id: str, run_dir: Path) -> list[dict[str, str]]:
     items: list[dict[str, str]] = []
     for path in sorted(run_dir.rglob("*")):
@@ -259,7 +314,12 @@ def run_agent(
     model_id: str,
     session_id: str,
 ) -> None:
+    run_dir: Path | None = None
+    process: subprocess.Popen[str] | None = None
     try:
+        if RUNS.snapshot(run_id).get("cancel_requested"):
+            finish_canceled_run(run_id)
+            return
         if CODEX_CLI is None:
             raise RuntimeError("未找到可执行的本机 Codex CLI")
         skill = resolve_skill(skill_relative)
@@ -301,6 +361,10 @@ def run_agent(
             shell=False,
             creationflags=creation_flags,
         )
+        with RUN_PROCESSES_LOCK:
+            RUN_PROCESSES[run_id] = process
+        if RUNS.snapshot(run_id).get("cancel_requested"):
+            terminate_process_tree(process)
         stderr_lines: list[str] = []
 
         def read_stderr() -> None:
@@ -362,6 +426,9 @@ def run_agent(
 
         return_code = process.wait()
         stderr_thread.join(timeout=2)
+        if RUNS.snapshot(run_id).get("cancel_requested"):
+            finish_canceled_run(run_id, run_dir)
+            return
         if return_code != 0:
             for line in stderr_lines[-20:]:
                 add_log(run_id, f"CLI: {line}")
@@ -381,8 +448,15 @@ def run_agent(
         )
         add_log(run_id, "本机 Codex CLI 执行完成")
     except Exception as error:
-        add_log(run_id, traceback.format_exc())
-        set_run(run_id, status="failed", error=redact(str(error)), finished_at=time.time())
+        if RUNS.snapshot(run_id).get("cancel_requested"):
+            finish_canceled_run(run_id, run_dir)
+        else:
+            add_log(run_id, traceback.format_exc())
+            set_run(run_id, status="failed", error=redact(str(error)), finished_at=time.time())
+    finally:
+        with RUN_PROCESSES_LOCK:
+            if RUN_PROCESSES.get(run_id) is process:
+                RUN_PROCESSES.pop(run_id, None)
 
 
 def _analysis_list(value: Any, field: str) -> list[str]:
@@ -636,6 +710,10 @@ class Handler(SimpleHTTPRequestHandler):
             return
         try:
             payload = self.read_json()
+            cancel_match = re.fullmatch(r"/api/runs/([0-9a-f]{12})/cancel", path)
+            if cancel_match:
+                self.json_response(202, cancel_run(cancel_match.group(1)))
+                return
             if path == "/api/ratings/settings":
                 self.json_response(200, RATINGS.update_levels(payload.get("rating_levels")))
                 return

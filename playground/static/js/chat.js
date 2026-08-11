@@ -1,4 +1,4 @@
-import { apiBase, createRun, getRun, getRunnerConfig } from './api.js';
+import { apiBase, cancelRun, createRun, getRun, getRunnerConfig } from './api.js';
 import { initializeAttachments } from './attachments.js';
 import { createArtifacts } from './artifacts.js';
 import { createConversationState } from './conversation-state.js';
@@ -31,6 +31,7 @@ export function initializeChat(details, initialPath) {
   let runnerConnected = false;
   let runnerConfigured = false;
   let codexSessionId = '';
+  let activeRunId = '';
   let conversationUploadId = crypto.randomUUID();
   const attachments = initializeAttachments({
     input: attachmentInput,
@@ -52,16 +53,18 @@ export function initializeChat(details, initialPath) {
   }
 
   function renderRunning(running) {
-    runButton.disabled = running || !runnerConnected || !runnerConfigured;
+    runButton.disabled = running ? !activeRunId : !runnerConnected || !runnerConfigured;
     runnerSkill.disabled = running;
     runnerModel.disabled = running;
     newChatButton.disabled = running;
     attachments.setDisabled(running);
-    runButton.textContent = running ? '执行中…' : '发送';
+    runButton.textContent = running ? '停止' : '发送';
+    runButton.classList.toggle('stop', running);
   }
 
   function resetConversation() {
     codexSessionId = '';
+    activeRunId = '';
     conversationUploadId = crypto.randomUUID();
     conversation.reset();
     if (pollTimer) window.clearTimeout(pollTimer);
@@ -137,11 +140,15 @@ export function initializeChat(details, initialPath) {
         return;
       }
       conversation.finish(token);
+      activeRunId = '';
       renderRunning(false);
       if (run.status === 'completed') {
         codexSessionId = run.session_id || codexSessionId;
         setRunnerStatus('ready', '等待你的下一条消息');
         appendMessage('assistant', run.result || '已完成，没有返回文字结果。', run.artifacts || []);
+      } else if (run.status === 'canceled') {
+        setRunnerStatus('ready', '任务已停止，可以继续输入');
+        appendMessage('assistant', run.result || '任务已停止。', run.artifacts || []);
       } else {
         setRunnerStatus('failed', run.error || '执行失败');
         appendMessage('assistant', `执行失败：${run.error || '未知错误'}`);
@@ -157,6 +164,7 @@ export function initializeChat(details, initialPath) {
         return;
       }
       if (!conversation.finish(token)) return;
+      activeRunId = '';
       renderRunning(false);
       setRunnerStatus('failed', error.message);
       appendMessage('assistant', `连接执行服务失败：${error.message}`);
@@ -187,12 +195,28 @@ export function initializeChat(details, initialPath) {
         sessionId: codexSessionId,
       });
       if (!conversation.isCurrent(token)) return;
+      activeRunId = run.id;
+      renderRunning(true);
       pollRun(run.id, token);
     } catch (error) {
       if (!conversation.finish(token)) return;
+      activeRunId = '';
       renderRunning(false);
       setRunnerStatus('failed', error.message);
       appendMessage('assistant', `创建任务失败：${error.message}`);
+    }
+  }
+
+  async function stopRun() {
+    if (!conversation.running || !activeRunId) return;
+    runButton.disabled = true;
+    setRunnerStatus('running', '正在停止当前任务……');
+    try {
+      await cancelRun(activeRunId);
+    } catch (error) {
+      if (!conversation.running) return;
+      runButton.disabled = false;
+      setRunnerStatus('failed', `停止失败：${error.message}`);
     }
   }
 
@@ -205,7 +229,10 @@ export function initializeChat(details, initialPath) {
     runnerPrompt.focus();
   }
 
-  runButton.addEventListener('click', sendPrompt);
+  runButton.addEventListener('click', () => {
+    if (conversation.running) stopRun();
+    else sendPrompt();
+  });
   runnerPrompt.addEventListener('keydown', event => {
     if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
       event.preventDefault();

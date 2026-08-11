@@ -32,6 +32,14 @@ export function getRun(runId) {
   return requestJson(`/api/runs/${runId}`);
 }
 
+export function cancelRun(runId) {
+  return requestJson(`/api/runs/${runId}/cancel`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}',
+  });
+}
+
 export function getRatings() {
   return requestJson('/api/ratings');
 }

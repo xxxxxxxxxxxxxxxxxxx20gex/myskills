@@ -17,29 +17,30 @@
 | 文件 | 模块职责 | 状态 | 大小 | 对外导出 | 当前功能 |
 |---|---|---|---:|---|---|
 | `skills-showcase.html` | 页面外壳 | 正常 | 10,788 B | — | 保留语义化 HTML、动态卡片容器、AI 详情、评分、项目版本管理和右侧对话区域 |
-| `playground/static/styles.css` | 样式系统 | 正常 | 24,990 B | — | 负责响应式布局、卡片、对话、Git 操作反馈、日志和产物预览样式 |
-| `playground/static/js/data.js` | Skill 辅助数据 | 正常 | 20,354 B | `repositorySkills`, `skillDetails`, `skillCategories` | 维护已有 Skill 的展示别名、视觉样式和默认功能分类 |
+| `playground/static/styles.css` | 样式系统 | 正常 | 25,129 B | — | 负责响应式布局、卡片、对话、Git 操作反馈、日志和产物预览样式 |
+| `playground/static/js/data.js` | Skill 辅助数据 | 正常 | 20,355 B | `repositorySkills`, `skillDetails`, `skillCategories` | 维护已有 Skill 的展示别名、视觉样式和默认功能分类 |
 | `playground/static/js/catalog.js` | 目录交互 | 正常 | 11,328 B | `initializeCatalog` | 根据后端实际目录渲染分类、组合筛选、AI 分析结论和详情弹窗 |
-| `playground/static/js/api.js` | API 客户端 | 正常 | 2,952 B | `apiBase`, `getRunnerConfig`, `createRun`, `getRun`, `getRatings`, `saveRatingLevels`, `saveSkillRating`, `getGitStatus`, `getGitDiff`, `fetchGitUpdates`, `pullGitUpdates`, `commitAndPushGit`, `saveGitProxyPort`, `getSkills`, `analyzeSkill`, `uploadAttachment` | 封装配置、目录、AI 分析、评分、Git、附件、任务和运行状态接口 |
+| `playground/static/js/api.js` | API 客户端 | 正常 | 3,137 B | `apiBase`, `getRunnerConfig`, `createRun`, `getRun`, `cancelRun`, `getRatings`, `saveRatingLevels`, `saveSkillRating`, `getGitStatus`, `getGitDiff`, `fetchGitUpdates`, `pullGitUpdates`, `commitAndPushGit`, `saveGitProxyPort`, `getSkills`, `analyzeSkill`, `uploadAttachment` | 封装配置、目录、AI 分析、评分、Git、附件、任务和运行状态接口 |
 | `playground/static/js/artifacts.js` | 产物渲染 | 正常 | 1,760 B | `createArtifacts` | 预览图片、音频、视频、HTML 和普通文件 |
 | `playground/static/js/markdown.js` | Markdown 渲染 | 正常 | 6,488 B | `renderMarkdown` | 安全渲染标题、表格、任务列表、引用、代码和外部链接，不执行原始 HTML |
 | `playground/static/js/resize.js` | 面板缩放 | 正常 | 2,691 B | `initializePanelResize` | 拖动或用键盘调整对话栏宽度，并在浏览器本地记忆 |
-| `playground/static/js/chat.js` | 对话状态 | 正常 | 8,677 B | `initializeChat` | 管理模型/Skill 选择、Codex session、断线重连轮询、日志、Markdown 和消息 |
+| `playground/static/js/chat.js` | 对话状态 | 正常 | 9,599 B | `initializeChat` | 管理模型/Skill 选择、Codex session、停止任务、断线重连轮询、日志、Markdown 和消息 |
 | `playground/static/js/attachments.js` | 附件交互 | 正常 | 3,174 B | `initializeAttachments` | 管理多选、拖拽、图片缩略图、移除、上传和附件状态 |
 | `playground/static/js/attachment-prompt.js` | 附件提示组合 | 正常 | 260 B | `composeAttachmentPrompt` | 把用户输入与上传后的本地绝对路径组合为页面可见且原样转发的消息 |
 | `playground/static/js/conversation-state.js` | 对话运行状态 | 正常 | 529 B | `createConversationState` | 隔离对话代次，阻止重复任务和过期轮询污染当前会话 |
 | `playground/static/js/ratings.js` | 评分交互 | 正常 | 3,845 B | `initializeRatings` | 管理 A/B/C 评分、备注和等级显示设置，并向目录筛选器同步评分元数据 |
 | `playground/static/js/git-panel.js` | Git 项目管理 | 正常 | 8,029 B | `initializeGitPanel` | 展示状态与 Diff，提供 Git 操作按钮的执行反馈，并触发 fetch、ff-only pull、选择性 commit/push |
 | `playground/static/js/app.js` | 前端编排 | 正常 | 1,169 B | — | 读取实际 Skill 目录并组合目录、评分、Git、对话与面板缩放模块 |
-| `playground/server.py` | 本地 Runner | 正常 | 32,078 B | — | 注册原始 Skills，桥接 Codex CLI，提供运行与 AI 分析接口并执行静态资源白名单 |
+| `playground/server.py` | 本地 Runner | 正常 | 34,908 B | — | 注册原始 Skills，桥接 Codex CLI，提供运行与 AI 分析接口并执行静态资源白名单 |
 | `playground/skill_service.py` | Skill 目录服务 | 正常 | 5,834 B | — | 扫描三类 Skill 目录，过滤 AI 分析输入中的敏感文件并持久化分析结论 |
 | `playground/run_registry.py` | 运行记录 | 正常 | 4,263 B | — | 将有界运行状态、日志和产物元数据线程安全地持久化到 .runs，支持服务重启恢复 |
 | `playground/rating_service.py` | 评分服务 | 正常 | 4,599 B | — | 校验并原子更新可进入 Git 的 skill-metadata.yaml |
 | `playground/git_service.py` | Git 服务 | 正常 | 10,907 B | — | 执行白名单 Git 参数、保护敏感文件并通过 GCM 推送 |
 | `skill-metadata.yaml` | 维护数据 | 正常 | 588 B | — | 保存 A/B/C 显示设置、Skill 评分和备注，随 Git 同步 |
 | `skill-insights.yaml` | AI 分析数据 | 正常 | 6,896 B | — | 保存功能分类、用途结论和仅针对恶意行为/信息窃取/系统破坏/重大资源占用的安全评估 |
-| `playground/generate_project_status.py` | 状态文档生成器 | 正常 | 11,457 B | — | 扫描模块、配置与 Skill 目录并更新本文件 |
-| `playground/tests/test_run_registry.py` | 后端回归测试 | 正常 | 2,831 B | — | 验证运行记录隔离、清理、持久化和服务重启恢复逻辑 |
+| `playground/generate_project_status.py` | 状态文档生成器 | 正常 | 11,722 B | — | 扫描模块、配置与 Skill 目录并更新本文件 |
+| `playground/tests/test_run_registry.py` | 后端回归测试 | 正常 | 3,409 B | — | 验证运行记录隔离、清理、取消、持久化和服务重启恢复逻辑 |
+| `playground/tests/test_run_cancel.py` | 停止任务回归测试 | 正常 | 1,798 B | — | 验证停止请求终止指定进程并持久化 canceled 状态 |
 | `playground/tests/test_skill_service.py` | Skill 目录回归测试 | 正常 | 3,283 B | — | 验证目录扫描、分析输入凭据过滤和分析结果持久化 |
 | `playground/tests/test_conversation_state.mjs` | 前端状态回归测试 | 正常 | 758 B | — | 验证重复任务拦截和旧对话代次失效逻辑 |
 | `playground/tests/test_attachments.mjs` | 附件回归测试 | 正常 | 560 B | — | 验证原始输入与一个或多个可见附件路径的组合格式 |
@@ -73,6 +74,7 @@ skills-showcase.html
 | `/api/config` | GET | 返回模型、默认模型和 Codex CLI 可用状态 |
 | `/api/runs` | POST | 创建新的 Codex CLI 执行或续接已有 session |
 | `/api/runs/<run-id>` | GET | 查询状态、日志、答复、session 和产物 |
+| `/api/runs/<run-id>/cancel` | POST | 停止指定运行及其 Codex CLI 子进程树 |
 | `/api/runs/<run-id>/files/<path>` | GET | 在页面中预览或下载本次运行产物 |
 | `/api/uploads` | POST | 流式保存对话附件到本机 `.runs/uploads` 并返回绝对路径 |
 | `/api/ratings` | GET | 读取评分等级、Skill 评分和备注 |

@@ -72,6 +72,19 @@ class RunRegistryTests(unittest.TestCase):
             self.assertIn("重启", restored["error"])
             self.assertTrue(restored["finished_at"])
 
+    def test_canceled_record_survives_restart(self) -> None:
+        with TemporaryDirectory() as temporary:
+            path = Path(temporary) / "registry.json"
+            registry = RunRegistry(storage_path=path)
+            canceled = make_run("canceled", status="canceled")
+            canceled["result"] = "任务已停止。"
+            registry.add(canceled)
+
+            restored = RunRegistry(storage_path=path).snapshot("canceled")
+
+            self.assertEqual(restored["status"], "canceled")
+            self.assertEqual(restored["result"], "任务已停止。")
+
 
 if __name__ == "__main__":
     unittest.main()

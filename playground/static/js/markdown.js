@@ -26,6 +26,64 @@ function renderInline(value) {
   return text.replace(/\u0000(\d+)\u0000/g, (_, index) => protectedFragments[Number(index)]);
 }
 
+function splitTableRow(line) {
+  let value = String(line).trim();
+  if (value.startsWith('|')) value = value.slice(1);
+  if (value.endsWith('|') && !value.endsWith('\\|')) value = value.slice(0, -1);
+
+  const cells = [];
+  let cell = '';
+  let inCode = false;
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+    if (character === '`') {
+      inCode = !inCode;
+      cell += character;
+      continue;
+    }
+    if (character === '\\' && value[index + 1] === '|') {
+      cell += '|';
+      index += 1;
+      continue;
+    }
+    if (character === '|' && !inCode) {
+      cells.push(cell.trim());
+      cell = '';
+      continue;
+    }
+    cell += character;
+  }
+  cells.push(cell.trim());
+  return cells;
+}
+
+function tableAlignment(delimiter) {
+  const value = delimiter.trim();
+  if (!/^:?-{3,}:?$/.test(value)) return null;
+  if (value.startsWith(':') && value.endsWith(':')) return 'center';
+  if (value.endsWith(':')) return 'right';
+  return 'left';
+}
+
+function readTable(lines, start) {
+  if (!lines[start]?.includes('|') || !lines[start + 1]?.includes('|')) return null;
+  const headers = splitTableRow(lines[start]);
+  const delimiters = splitTableRow(lines[start + 1]);
+  if (headers.length < 2 || delimiters.length !== headers.length) return null;
+  const alignments = delimiters.map(tableAlignment);
+  if (alignments.some(alignment => alignment === null)) return null;
+
+  const rows = [];
+  let index = start + 2;
+  while (index < lines.length && lines[index].trim() && lines[index].includes('|')) {
+    const cells = splitTableRow(lines[index]).slice(0, headers.length);
+    while (cells.length < headers.length) cells.push('');
+    rows.push(cells);
+    index += 1;
+  }
+  return { headers, alignments, rows, nextIndex: index };
+}
+
 function startsBlock(line) {
   return /^\s*$|^```|^#{1,6}\s+|^\s*>\s?|^\s*[-*+]\s+|^\s*\d+[.)]\s+|^\s*(?:---+|___+|\*\*\*+)\s*$/.test(line);
 }
@@ -47,6 +105,20 @@ export function renderMarkdown(markdown) {
     if (!line.trim()) {
       closeList();
       index += 1;
+      continue;
+    }
+
+    const table = readTable(lines, index);
+    if (table) {
+      closeList();
+      const header = table.headers.map((cell, cellIndex) => (
+        `<th class="align-${table.alignments[cellIndex]}">${renderInline(cell)}</th>`
+      )).join('');
+      const body = table.rows.map(row => `<tr>${row.map((cell, cellIndex) => (
+        `<td class="align-${table.alignments[cellIndex]}">${renderInline(cell)}</td>`
+      )).join('')}</tr>`).join('');
+      output.push(`<div class="markdown-table-wrap"><table><thead><tr>${header}</tr></thead>${body ? `<tbody>${body}</tbody>` : ''}</table></div>`);
+      index = table.nextIndex;
       continue;
     }
 
@@ -100,12 +172,19 @@ export function renderMarkdown(markdown) {
     const ordered = line.match(/^\s*\d+[.)]\s+(.+)$/);
     if (unordered || ordered) {
       const nextType = unordered ? 'ul' : 'ol';
+      const content = (unordered || ordered)[1];
+      const task = content.match(/^\[([ xX])]\s+(.+)$/);
       if (listType !== nextType) {
         closeList();
         listType = nextType;
         output.push(`<${listType}>`);
       }
-      output.push(`<li>${renderInline((unordered || ordered)[1])}</li>`);
+      if (task) {
+        const checked = task[1].toLowerCase() === 'x' ? ' checked' : '';
+        output.push(`<li class="task-list-item"><input class="task-list-checkbox" type="checkbox" disabled${checked}>${renderInline(task[2])}</li>`);
+      } else {
+        output.push(`<li>${renderInline(content)}</li>`);
+      }
       index += 1;
       continue;
     }

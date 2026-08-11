@@ -17,12 +17,12 @@
 | 文件 | 模块职责 | 状态 | 大小 | 对外导出 | 当前功能 |
 |---|---|---|---:|---|---|
 | `skills-showcase.html` | 页面外壳 | 正常 | 10,788 B | — | 保留语义化 HTML、动态卡片容器、AI 详情、评分、项目版本管理和右侧对话区域 |
-| `playground/static/styles.css` | 样式系统 | 正常 | 23,895 B | — | 负责响应式布局、卡片、对话、Git 操作反馈、日志和产物预览样式 |
-| `playground/static/js/data.js` | Skill 辅助数据 | 正常 | 20,302 B | `repositorySkills`, `skillDetails`, `skillCategories` | 维护已有 Skill 的展示别名、视觉样式和默认功能分类 |
+| `playground/static/styles.css` | 样式系统 | 正常 | 24,990 B | — | 负责响应式布局、卡片、对话、Git 操作反馈、日志和产物预览样式 |
+| `playground/static/js/data.js` | Skill 辅助数据 | 正常 | 20,363 B | `repositorySkills`, `skillDetails`, `skillCategories` | 维护已有 Skill 的展示别名、视觉样式和默认功能分类 |
 | `playground/static/js/catalog.js` | 目录交互 | 正常 | 11,328 B | `initializeCatalog` | 根据后端实际目录渲染分类、组合筛选、AI 分析结论和详情弹窗 |
 | `playground/static/js/api.js` | API 客户端 | 正常 | 2,891 B | `apiBase`, `getRunnerConfig`, `createRun`, `getRun`, `getRatings`, `saveRatingLevels`, `saveSkillRating`, `getGitStatus`, `getGitDiff`, `fetchGitUpdates`, `pullGitUpdates`, `commitAndPushGit`, `saveGitProxyPort`, `getSkills`, `analyzeSkill`, `uploadAttachment` | 封装配置、目录、AI 分析、评分、Git、附件、任务和运行状态接口 |
 | `playground/static/js/artifacts.js` | 产物渲染 | 正常 | 1,760 B | `createArtifacts` | 预览图片、音频、视频、HTML 和普通文件 |
-| `playground/static/js/markdown.js` | Markdown 渲染 | 正常 | 3,694 B | `renderMarkdown` | 安全渲染标题、列表、引用、代码和外部链接，不执行原始 HTML |
+| `playground/static/js/markdown.js` | Markdown 渲染 | 正常 | 6,488 B | `renderMarkdown` | 安全渲染标题、表格、任务列表、引用、代码和外部链接，不执行原始 HTML |
 | `playground/static/js/resize.js` | 面板缩放 | 正常 | 2,691 B | `initializePanelResize` | 拖动或用键盘调整对话栏宽度，并在浏览器本地记忆 |
 | `playground/static/js/chat.js` | 对话状态 | 正常 | 8,153 B | `initializeChat` | 管理模型/Skill 选择、Codex session、轮询、日志、Markdown 和消息 |
 | `playground/static/js/attachments.js` | 附件交互 | 正常 | 3,174 B | `initializeAttachments` | 管理多选、拖拽、图片缩略图、移除、上传和附件状态 |
@@ -38,11 +38,12 @@
 | `playground/git_service.py` | Git 服务 | 正常 | 10,907 B | — | 执行白名单 Git 参数、保护敏感文件并通过 GCM 推送 |
 | `skill-metadata.yaml` | 维护数据 | 正常 | 588 B | — | 保存 A/B/C 显示设置、Skill 评分和备注，随 Git 同步 |
 | `skill-insights.yaml` | AI 分析数据 | 正常 | 6,896 B | — | 保存功能分类、用途结论和仅针对恶意行为/信息窃取/系统破坏/重大资源占用的安全评估 |
-| `playground/generate_project_status.py` | 状态文档生成器 | 正常 | 11,135 B | — | 扫描模块、配置与 Skill 目录并更新本文件 |
+| `playground/generate_project_status.py` | 状态文档生成器 | 正常 | 11,289 B | — | 扫描模块、配置与 Skill 目录并更新本文件 |
 | `playground/tests/test_run_registry.py` | 后端回归测试 | 正常 | 1,710 B | — | 验证运行记录隔离、清理和活动任务保留逻辑 |
 | `playground/tests/test_skill_service.py` | Skill 目录回归测试 | 正常 | 3,283 B | — | 验证目录扫描、分析输入凭据过滤和分析结果持久化 |
 | `playground/tests/test_conversation_state.mjs` | 前端状态回归测试 | 正常 | 758 B | — | 验证重复任务拦截和旧对话代次失效逻辑 |
 | `playground/tests/test_attachments.mjs` | 附件回归测试 | 正常 | 560 B | — | 验证原始输入与一个或多个可见附件路径的组合格式 |
+| `playground/tests/test_markdown.mjs` | Markdown 回归测试 | 正常 | 1,531 B | — | 验证表格、对齐、任务列表、行内格式和 HTML 转义 |
 | `playground/tests/test_catalog_data.mjs` | 目录数据回归测试 | 正常 | 1,033 B | — | 验证全部 Skill 的功能分类没有遗漏、重复或无效归属 |
 
 ## 数据与调用关系

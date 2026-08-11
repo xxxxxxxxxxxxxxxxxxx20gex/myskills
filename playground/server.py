@@ -21,7 +21,7 @@ from generate_project_status import update_project_status
 from git_service import GitOperationError, GitService
 from rating_service import RatingService
 from run_registry import RunRegistry
-from skill_service import FOLDER_SOURCES, SkillService
+from skill_service import SkillService
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -68,7 +68,7 @@ GIT = GitService(
     str(GIT_CONFIG.get("proxy_host", "127.0.0.1")),
     int(GIT_CONFIG.get("proxy_port", 0)),
 )
-SKILLS = SkillService(ROOT, resolve_skill=lambda value: resolve_skill(value), read_skill_name=lambda value: read_skill_name(value))
+SKILLS = SkillService(ROOT, resolve_skill=lambda value: resolve_skill(value))
 
 
 def save_git_proxy_port(value: Any) -> dict[str, Any]:
@@ -629,23 +629,6 @@ class Handler(SimpleHTTPRequestHandler):
             except Exception as error:
                 self.json_response(400, {"error": str(error)})
             return
-        if path == "/api/skills/import" and content_type == "application/zip":
-            try:
-                length = int(self.headers.get("Content-Length", "0"))
-                if length <= 0 or length > 50 * 1024 * 1024:
-                    raise ValueError("ZIP 文件为空或超过 50 MB")
-                query = urllib.parse.parse_qs(parsed.query)
-                result = SKILLS.import_zip(
-                    self.rfile.read(length),
-                    str((query.get("source") or [""])[0]),
-                    str((query.get("category") or [""])[0]),
-                )
-                register_project_skills()
-                update_project_status(ROOT, CONFIG)
-                self.json_response(201, result)
-            except Exception as error:
-                self.json_response(400, {"error": str(error)})
-            return
         if content_type != "application/json":
             self.json_response(415, {"error": "该接口不支持此 Content-Type"})
             return
@@ -681,36 +664,6 @@ class Handler(SimpleHTTPRequestHandler):
                     str(payload.get("path", "")),
                     str(payload.get("model", CONFIG["agent"]["default_model"])),
                 ))
-                return
-            if path == "/api/skills/move":
-                if has_active_runs():
-                    raise ValueError("有 Skill 正在运行，请等待完成后再更新维护标签")
-                result = SKILLS.move(
-                    str(payload.get("path", "")),
-                    str(payload.get("source", "")),
-                )
-                if result["changed"]:
-                    try:
-                        RATINGS.move_skill(result["old_path"], result["new_path"])
-                    except Exception:
-                        old_source = FOLDER_SOURCES.get(result["old_path"].split("/", 1)[0], "")
-                        if old_source:
-                            SKILLS.move(result["new_path"], old_source)
-                        raise
-                    register_project_skills()
-                    update_project_status(ROOT, CONFIG)
-                self.json_response(200, result)
-                return
-            if path == "/api/skills/delete":
-                if has_active_runs():
-                    raise ValueError("有 Skill 正在运行，请等待完成后再删除")
-                result = SKILLS.delete(
-                    str(payload.get("path", "")),
-                    str(payload.get("confirmation", "")),
-                )
-                register_project_skills()
-                update_project_status(ROOT, CONFIG)
-                self.json_response(200, result)
                 return
             if path != "/api/runs":
                 self.json_response(404, {"error": "Not found"})
@@ -761,38 +714,6 @@ class Handler(SimpleHTTPRequestHandler):
             return
         if path == "/api/skills":
             self.json_response(200, SKILLS.list_skills())
-            return
-        if path == "/api/skills/tree":
-            try:
-                query = urllib.parse.parse_qs(parsed.query)
-                self.json_response(200, SKILLS.tree(str((query.get("path") or [""])[0])))
-            except Exception as error:
-                self.json_response(400, {"error": str(error)})
-            return
-        if path == "/api/skills/file":
-            try:
-                query = urllib.parse.parse_qs(parsed.query)
-                self.json_response(200, SKILLS.read_file(
-                    str((query.get("path") or [""])[0]),
-                    str((query.get("file") or [""])[0]),
-                ))
-            except Exception as error:
-                self.json_response(400, {"error": str(error)})
-            return
-        if path == "/api/skills/export":
-            try:
-                query = urllib.parse.parse_qs(parsed.query)
-                filename, data, excluded = SKILLS.export_zip(str((query.get("path") or [""])[0]))
-                self.send_response(200)
-                self.send_header("Content-Type", "application/zip")
-                quoted = urllib.parse.quote(filename)
-                self.send_header("Content-Disposition", f"attachment; filename*=UTF-8''{quoted}")
-                self.send_header("X-Excluded-Files", str(len(excluded)))
-                self.send_header("Content-Length", str(len(data)))
-                self.end_headers()
-                self.wfile.write(data)
-            except Exception as error:
-                self.json_response(400, {"error": str(error)})
             return
         if path == "/api/git/status":
             try:

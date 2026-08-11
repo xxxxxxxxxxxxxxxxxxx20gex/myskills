@@ -1,0 +1,4 @@
+interface:
+  display_name: "MySkills 管理"
+  short_description: "通过对话管理 Skills、项目同步、测试和 Git 推送"
+  default_prompt: "Use $manage-myskills to inspect this repository and complete the requested Skill management or project synchronization task."

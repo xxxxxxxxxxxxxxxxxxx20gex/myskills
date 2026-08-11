@@ -94,14 +94,6 @@ export function getSkills() {
   return requestJson('/api/skills');
 }
 
-export function getSkillTree(path) {
-  return requestJson(`/api/skills/tree?path=${encodeURIComponent(path)}`);
-}
-
-export function getSkillFile(path, file) {
-  return requestJson(`/api/skills/file?path=${encodeURIComponent(path)}&file=${encodeURIComponent(file)}`);
-}
-
 export function analyzeSkill(path, model) {
   return requestJson('/api/skills/analyze', {
     method: 'POST',
@@ -110,33 +102,6 @@ export function analyzeSkill(path, model) {
   });
 }
 
-export function deleteSkill(path) {
-  return requestJson('/api/skills/delete', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path, confirmation: path }),
-  });
-}
-
-export function moveSkill(path, source) {
-  return requestJson('/api/skills/move', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path, source }),
-  });
-}
-
-export function importSkill(file, source, category) {
-  return requestJson(`/api/skills/import?source=${encodeURIComponent(source)}&category=${encodeURIComponent(category)}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/zip' },
-    body: file,
-  });
-}
-
-export function skillExportUrl(path) {
-  return `${apiBase}/api/skills/export?path=${encodeURIComponent(path)}`;
-}
 
 export function uploadAttachment(file, conversationId) {
   return requestJson(`/api/uploads?conversation_id=${encodeURIComponent(conversationId)}&name=${encodeURIComponent(file.name)}`, {

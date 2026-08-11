@@ -69,26 +69,8 @@
     .detail-block li + li { margin-top:5px; }
     .risk-block { background:#fff8ed; }
     .toolbar-button.analyze { color:#fff; border-color:#6c4bd6; background:#7555df; }
-    .toolbar-button.danger { color:#b52d37; border-color:#f0c6ca; background:#fff7f7; }
-    .toolbar-button.danger:hover { background:#ffe9eb; }
-    .skill-files { display:grid; grid-template-columns:minmax(180px, 30%) minmax(0, 1fr); min-height:300px; max-height:440px; overflow:hidden; border:1px solid var(--line); border-radius:11px; background:#fff; }
-    .skill-file-tree { overflow:auto; padding:8px; border-right:1px solid var(--line); }
-    .file-tree-row { display:block; width:100%; min-height:27px; padding:5px 7px 5px calc(7px + var(--depth) * 14px); overflow:hidden; border:0; border-radius:6px; color:#556078; background:transparent; text-align:left; text-overflow:ellipsis; white-space:nowrap; font:11px ui-monospace,SFMono-Regular,Consolas,monospace; }
-    button.file-tree-row.directory { display:flex; align-items:center; gap:4px; color:#3f4e6a; cursor:pointer; }
-    button.file-tree-row.directory:hover { background:#f1f4f9; }
-    .file-tree-arrow { width:10px; flex:0 0 10px; color:#6d7c99; text-align:center; }
-    button.file-tree-row.readable { color:#244fae; cursor:pointer; }
-    button.file-tree-row.readable:hover { background:#edf3ff; }
-    button.file-tree-row.readable.selected { color:#173d91; background:#dfeaff; box-shadow:inset 2px 0 #4778dc; }
-    .file-tree-children[hidden] { display:none; }
-    .skill-file-content { display:grid; grid-template-rows:auto 1fr; min-width:0; overflow:hidden; }
-    .skill-file-content > strong { padding:9px 11px; overflow:hidden; border-bottom:1px solid var(--line); color:#4b5871; text-overflow:ellipsis; white-space:nowrap; font-size:11px; }
-    .skill-file-content pre { min-height:0; margin:0; padding:12px; overflow:auto; color:#26344e; background:#fbfcff; white-space:pre-wrap; word-break:break-word; font:11px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace; }
-    .import-grid { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(130px,.7fr) minmax(130px,.7fr); gap:12px; margin-top:22px; }
     .detail-wide { grid-column:1 / -1; }
     .path { margin:0; overflow-wrap:anywhere; color:#4a5670; font:12px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace; }
-    .skill-location-editor { display:grid; grid-template-columns:150px minmax(0,1fr) auto; align-items:end; gap:12px; }
-    .skill-location-editor label,.skill-location-editor > div { display:grid; gap:5px; color:#3e4a63; font-size:12px; font-weight:700; }
     .field { display:grid; gap:6px; }
     .field label { color:#3e4a63; font-size:13px; font-weight:700; }
     select, textarea, input { width:100%; border:1px solid #ccd5e5; border-radius:11px; color:var(--ink); background:#fff; font:inherit; }
@@ -233,5 +215,5 @@
     @container (max-width:860px) { .grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
     @container (max-width:760px) { .grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
     @container (max-width:480px) { .grid { grid-template-columns:1fr; } }
-    @media (max-width:780px) { .app-shell { width:min(100% - 20px, 780px); grid-template-columns:1fr; } .panel-resizer { display:none; } .chat-panel { position:relative; top:auto; height:70vh; order:-1; } .tab-tools { width:100%; margin-left:0; } .git-summary { grid-template-columns:1fr 1fr; } .git-proxy-settings { flex-wrap:wrap; } .git-proxy-settings small { width:100%; margin-left:0; } .git-workspace { grid-template-columns:1fr; } .git-files { border-right:0; border-bottom:1px solid var(--line); } .rating-editor,.skill-location-editor { grid-template-columns:1fr; } .skill-files { grid-template-columns:1fr; max-height:none; } .skill-file-tree { max-height:190px; border-right:0; border-bottom:1px solid var(--line); } .skill-file-content { min-height:260px; } .import-grid { grid-template-columns:1fr; } }
+    @media (max-width:780px) { .app-shell { width:min(100% - 20px, 780px); grid-template-columns:1fr; } .panel-resizer { display:none; } .chat-panel { position:relative; top:auto; height:70vh; order:-1; } .tab-tools { width:100%; margin-left:0; } .git-summary { grid-template-columns:1fr 1fr; } .git-proxy-settings { flex-wrap:wrap; } .git-proxy-settings small { width:100%; margin-left:0; } .git-workspace { grid-template-columns:1fr; } .git-files { border-right:0; border-bottom:1px solid var(--line); } .rating-editor { grid-template-columns:1fr; } }
     @media (max-width:520px) { .wrap { width:min(100% - 24px, 1480px); } .app-shell { padding-top:8px; } .grid,.detail-grid,.artifacts { grid-template-columns:1fr; } .detail-wide { grid-column:auto; } .card { min-height:0; } .tabs { top:6px; padding:6px; } .tab { flex:1 1 calc(50% - 9px); padding-inline:8px; } .dialog-inner { padding:18px; } .dialog-actions { gap:6px; } .dialog-run-shortcut { padding:0 11px; } .chat-controls { grid-template-columns:1fr; } .rating-level-head { display:none; } .rating-level-row { grid-template-columns:32px 1fr 54px; } .rating-level-row input:nth-of-type(2) { grid-column:2 / -1; grid-row:2; } .git-actions { grid-template-columns:1fr; } }

@@ -10,7 +10,7 @@
   <div class="app-shell">
   <main class="catalog">
     <nav class="tabs" role="tablist" aria-label="技能分类">
-      <button class="tab" type="button" role="tab" aria-selected="true" data-filter="all">全部 38</button>
+      <button class="tab" type="button" role="tab" aria-selected="true" data-filter="all">全部</button>
       <button class="tab" type="button" role="tab" aria-selected="false" data-filter="office">办公文档</button>
       <button class="tab" type="button" role="tab" aria-selected="false" data-filter="visual">图像演示</button>
       <button class="tab" type="button" role="tab" aria-selected="false" data-filter="academic">学术研究</button>
@@ -24,7 +24,6 @@
         <label class="filter-control search-control" for="skill-search"><span>搜索</span><input id="skill-search" type="search" placeholder="名称、功能或 slug" autocomplete="off"></label>
         <div class="filter-actions">
           <button id="open-rating-settings" class="toolbar-button" type="button">等级设置</button>
-          <button id="open-skill-manager" class="toolbar-button" type="button">Skill 管理</button>
           <button id="open-git-panel" class="toolbar-button primary" type="button">项目管理</button>
         </div>
       </div>
@@ -32,51 +31,6 @@
 
     <div id="catalog-sections"></div>
     <p id="catalog-empty" class="catalog-empty" hidden>没有符合当前筛选条件的 Skill。</p>
-
-    <section data-status-section="self">
-      <div class="section-head"><h2>自创 · 图像与演示</h2><span>把内容变成可看、可讲、可交付的视觉成果</span></div>
-      <div class="grid">
-        <button type="button" class="card" data-skill="gpt-image"><div class="card-top"><div class="icon blue">✦</div><div><h3>GPT Image</h3><p class="slug">gpt-image</p></div></div><p class="desc">生成、编辑或局部重绘图片；内置海报、中文文字、UI、图表和科研图的提示词案例库。</p><div class="flow"><strong>文字 / 参考图 / Mask</strong><span class="arrow">→</span>图像 API<span class="arrow">→</span><strong>PNG、JPEG、WebP</strong></div><span class="more">查看详细信息 <span>→</span></span></button>
-        <button type="button" class="card" data-skill="html-ppt-build"><div class="card-top"><div class="icon purple">▣</div><div><h3>HTML PPT Build</h3><p class="slug">html-ppt-build</p></div></div><p class="desc">把 Markdown、报告和技术材料拆解为高信息密度的中文 HTML 幻灯片，并导出高清 PPTX。</p><div class="flow"><strong>报告 / Markdown</strong><span class="arrow">→</span>HTML 页面<span class="arrow">→</span><strong>预览索引 / PPTX</strong></div><span class="more">查看详细信息 <span>→</span></span></button>
-        <button type="button" class="card" data-skill="ppt-technical-redesign"><div class="card-top"><div class="icon purple">◫</div><div><h3>PPT Technical Redesign</h3><p class="slug">ppt-technical-redesign</p></div></div><p class="desc">重构普通演示文稿的叙事、结构与技术视觉表达，适合申报、答辩、架构与竞赛场景。</p><div class="flow"><strong>原 PPT / 页面内容</strong><span class="arrow">→</span>结构与视觉重设计<span class="arrow">→</span><strong>技术汇报页</strong></div><span class="more">查看详细信息 <span>→</span></span></button>
-      </div>
-    </section>
-
-    <section data-status-section="self">
-      <div class="section-head"><h2>自创 · 文档与学术检索</h2><span>找到资料，并把非结构化内容变成可用文本</span></div>
-      <div class="grid">
-        <button type="button" class="card" data-skill="arxiv-search"><div class="card-top"><div class="icon green">⌕</div><div><h3>arXiv Search</h3><p class="slug">arxiv-search</p></div></div><p class="desc">检索最新预印本、精确 arXiv ID、分类、日期与 PDF 链接，输出结构化论文信息。</p><div class="flow"><strong>主题 / ID / 日期</strong><span class="arrow">→</span>arXiv API<span class="arrow">→</span><strong>论文与 PDF 元数据</strong></div><span class="more">查看详细信息 <span>→</span></span></button>
-        <button type="button" class="card" data-skill="semantic-scholar-search"><div class="card-top"><div class="icon green">⌘</div><div><h3>Semantic Scholar Search</h3><p class="slug">semantic-scholar-search</p></div></div><p class="desc">检索论文、作者、引用与参考文献，并查看影响力引用、开放获取 PDF 和外部标识。</p><div class="flow"><strong>论文 / 作者</strong><span class="arrow">→</span>Academic Graph<span class="arrow">→</span><strong>引文网络与详情</strong></div><span class="more">查看详细信息 <span>→</span></span></button>
-        <button type="button" class="card" data-skill="mineru-to-markdown"><div class="card-top"><div class="icon green">↧</div><div><h3>MinerU To Markdown</h3><p class="slug">mineru-to-markdown</p></div></div><p class="desc">提取 PDF、Office、图片、网页或 URL 内容；可识别 OCR、表格、公式和配套图片。</p><div class="flow"><strong>文件 / URL</strong><span class="arrow">→</span>文档解析<span class="arrow">→</span><strong>Markdown 与资源</strong></div><span class="more">查看详细信息 <span>→</span></span></button>
-      </div>
-    </section>
-
-    <section data-status-section="self">
-      <div class="section-head"><h2>自创 · 内容采集与媒体</h2><span>归档公开内容，或为视频补上与画面同步的声音</span></div>
-      <div class="grid">
-        <button type="button" class="card" data-skill="douyin-video-downloader"><div class="card-top"><div class="icon orange">▶</div><div><h3>Douyin Video Downloader</h3><p class="slug">douyin-video-downloader</p></div></div><p class="desc">下载公开抖音内容，并按标题建立目录，保留视频、封面、图文、HTML、来源与原始元数据。</p><div class="flow"><strong>公开抖音链接</strong><span class="arrow">→</span>采集与整理<span class="arrow">→</span><strong>可复查本地归档</strong></div><span class="more">查看详细信息 <span>→</span></span></button>
-        <button type="button" class="card" data-skill="xiaohongshu-note-downloader"><div class="card-top"><div class="icon orange">▧</div><div><h3>Xiaohongshu Note Downloader</h3><p class="slug">xiaohongshu-note-downloader</p></div></div><p class="desc">下载公开小红书笔记，归档正文、图片、视频、页面 HTML 和来源信息。</p><div class="flow"><strong>公开小红书链接</strong><span class="arrow">→</span>采集与整理<span class="arrow">→</span><strong>图文 / 视频归档</strong></div><span class="more">查看详细信息 <span>→</span></span></button>
-        <button type="button" class="card" data-skill="video-narration-tts"><div class="card-top"><div class="icon orange">♬</div><div><h3>Video Narration TTS</h3><p class="slug">video-narration-tts</p></div></div><p class="desc">先理解视频画面，再改写匹配的中文旁白，使用 Aliyun MaaS/Qwen TTS 合成音频和成片。</p><div class="flow"><strong>视频 + 文案</strong><span class="arrow">→</span>画面匹配与 TTS<span class="arrow">→</span><strong>配音 MP4 / 音频</strong></div><span class="more">查看详细信息 <span>→</span></span></button>
-      </div>
-    </section>
-
-    <section data-status-section="self">
-      <div class="section-head"><h2>自创 · 本地工具</h2><span>安全地复用凭据，或便捷地分享本地交付物</span></div>
-      <div class="grid">
-        <button type="button" class="card" data-skill="local-credential-memory"><div class="card-top"><div class="icon blue">⌑</div><div><h3>Local Credential Memory</h3><p class="slug">local-credential-memory</p></div></div><p class="desc">在单一本地凭据文件中维护账号、密码、API key、SSH 和数据库连接；经授权可从 Codex 等本机配置发现并导入。</p><div class="flow"><strong>凭据 / 授权配置源</strong><span class="arrow">→</span>发现并持久化<span class="arrow">→</span><strong>当前及后续安全复用</strong></div><span class="more">查看详细信息 <span>→</span></span></button>
-        <button type="button" class="card" data-skill="temporary-public-file-links"><div class="card-top"><div class="icon blue">↗</div><div><h3>Temporary Public File Links</h3><p class="slug">temporary-public-file-links</p></div></div><p class="desc">为本地截图、报告、压缩包或生成媒体创建短期公开链接，解决附件不可见或不便分享的问题。</p><div class="flow"><strong>本地文件 / 目录</strong><span class="arrow">→</span>临时上传<span class="arrow">→</span><strong>可访问分享链接</strong></div><span class="more">查看详细信息 <span>→</span></span></button>
-      </div>
-    </section>
-
-    <section data-status-section="tested">
-      <div class="section-head"><h2>已测 Skills</h2><span>已经过实际使用或验证，可优先复用</span></div>
-      <div id="tested-grid" class="grid"></div>
-    </section>
-
-    <section data-status-section="pending">
-      <div class="section-head"><h2>待测 Skills</h2><span>已收集但仍需验证兼容性、依赖或实际效果</span></div>
-      <div id="pending-grid" class="grid"></div>
-    </section>
   </main>
 
   <button id="panel-resizer" class="panel-resizer" type="button" role="separator" aria-label="调整对话栏宽度" aria-orientation="vertical" title="拖动调整宽度，双击恢复默认"></button>
@@ -113,14 +67,13 @@
         <div class="dialog-title"><div id="dialog-icon" class="icon blue">✦</div><div><h2 id="dialog-name"></h2><p id="dialog-slug" class="dialog-slug"></p></div></div>
         <div class="dialog-actions">
           <button id="dialog-analyze" class="toolbar-button analyze" type="button">AI 分析</button>
-          <button id="dialog-export" class="toolbar-button" type="button">导出</button>
-          <button id="dialog-delete" class="toolbar-button danger" type="button">删除</button>
           <button id="dialog-run-shortcut" class="dialog-run-shortcut" type="button">立即运行</button>
           <button id="dialog-close" class="close" type="button" aria-label="关闭">×</button>
         </div>
       </div>
       <div id="detail-panel">
         <p id="dialog-summary" class="detail-summary"></p>
+        <p id="dialog-path" class="path"></p>
         <div class="analysis-status"><span id="analysis-meta"></span><span id="analysis-feedback" class="inline-feedback" aria-live="polite"></span></div>
         <div class="detail-grid">
           <div class="detail-block"><h3>使用条件</h3><ul id="dialog-conditions"></ul></div>
@@ -129,8 +82,6 @@
           <div class="detail-block"><h3>是否产生附件</h3><ul id="dialog-attachments"></ul></div>
           <div class="detail-block"><h3>最终结果</h3><ul id="dialog-results"></ul></div>
           <div class="detail-block risk-block"><h3>安全风险评估</h3><ul id="dialog-risks"></ul></div>
-          <div class="detail-block detail-wide"><h3>文件结构与内容</h3><div class="skill-files"><div id="skill-file-tree" class="skill-file-tree"></div><div class="skill-file-content"><strong id="skill-file-title">文件预览</strong><pre id="skill-file-preview">选择左侧文件查看内容。</pre></div></div></div>
-          <div class="detail-block detail-wide"><h3>维护标签与 Skill 位置</h3><div class="skill-location-editor"><label>维护标签<select id="skill-maintenance-label"><option value="self">自创</option><option value="tested">已测</option><option value="pending">待测</option></select></label><div><span>当前位置</span><p id="dialog-path" class="path"></p></div><button id="update-skill-label" class="toolbar-button" type="button">更新标签</button></div><p id="skill-location-feedback" class="inline-feedback" aria-live="polite"></p></div>
           <div class="detail-block detail-wide detail-rating">
             <h3>我的评分</h3>
             <div class="rating-editor">
@@ -142,18 +93,6 @@
           </div>
         </div>
       </div>
-    </div>
-  </dialog>
-  <dialog id="skill-manager-dialog" aria-labelledby="skill-manager-title">
-    <div class="dialog-inner">
-      <div class="dialog-head"><div><h2 id="skill-manager-title">导入 Skill</h2><p class="dialog-slug">导入后自动出现在目录中；导出和删除请在 Skill 详情中操作</p></div><button id="skill-manager-close" class="close" type="button" aria-label="关闭">×</button></div>
-      <div class="import-grid">
-        <label class="field"><span>ZIP 文件</span><input id="import-skill-file" type="file" accept=".zip,application/zip"></label>
-        <label class="field"><span>存放位置</span><select id="import-source"><option value="self">自创</option><option value="tested">已测</option><option value="pending">待测</option></select></label>
-        <label class="field"><span>功能分类</span><select id="import-category"></select></label>
-      </div>
-      <p class="security-note">ZIP 根目录或唯一的顶层目录中必须包含 SKILL.md。导入会拒绝 .env、密钥、证书、凭据和危险路径，不会覆盖同名 Skill。</p>
-      <div class="dialog-footer"><p id="skill-manager-feedback" class="inline-feedback" aria-live="polite"></p><button id="import-skill-button" class="run-button" type="button">导入 Skill</button></div>
     </div>
   </dialog>
   <dialog id="rating-dialog" aria-labelledby="rating-dialog-title">

@@ -4,7 +4,6 @@ import { initializeChat } from './chat.js';
 import { initializePanelResize } from './resize.js';
 import { initializeRatings } from './ratings.js';
 import { initializeGitPanel } from './git-panel.js';
-import { initializeSkillManager } from './skill-manager.js';
 import { getSkills } from './api.js';
 
 async function bootstrap() {
@@ -22,7 +21,6 @@ async function bootstrap() {
     : allDetails[0]?.path;
   chat = initializeChat(allDetails, initialPath);
   initializePanelResize();
-  initializeSkillManager();
   await initializeRatings();
   initializeGitPanel();
 }

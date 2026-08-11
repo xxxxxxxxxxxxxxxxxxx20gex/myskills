@@ -4,7 +4,7 @@
 
 ## 当前概况
 
-- Skill 总数：**38**
+- Skill 总数：**39**
 - 前端架构：原生 HTML + CSS + ES Modules，无构建步骤
 - 执行后端：本机 Codex CLI（sandbox：`danger-full-access`，approval：`never`）
 - 提示词策略：仅添加显式 `$skill-name` 选择标记，用户输入原样转发，无 Runner 行为提示
@@ -16,13 +16,11 @@
 
 | 文件 | 模块职责 | 状态 | 大小 | 对外导出 | 当前功能 |
 |---|---|---|---:|---|---|
-| `skills-showcase.html` | 页面外壳 | 正常 | 21,200 B | — | 保留语义化 HTML、动态卡片容器、AI 详情、文件管理和右侧对话区域 |
-| `playground/static/styles.css` | 样式系统 | 正常 | 26,397 B | — | 负责响应式布局、卡片、文件浏览、对话、Git 操作反馈、日志和产物预览样式 |
-| `playground/static/js/data.js` | Skill 辅助数据 | 正常 | 19,355 B | `repositorySkills`, `skillDetails`, `skillCategories` | 维护已有 Skill 的展示别名、视觉样式和默认功能分类 |
+| `skills-showcase.html` | 页面外壳 | 正常 | 10,788 B | — | 保留语义化 HTML、动态卡片容器、AI 详情、评分、项目版本管理和右侧对话区域 |
+| `playground/static/styles.css` | 样式系统 | 正常 | 23,895 B | — | 负责响应式布局、卡片、对话、Git 操作反馈、日志和产物预览样式 |
+| `playground/static/js/data.js` | Skill 辅助数据 | 正常 | 20,302 B | `repositorySkills`, `skillDetails`, `skillCategories` | 维护已有 Skill 的展示别名、视觉样式和默认功能分类 |
 | `playground/static/js/catalog.js` | 目录交互 | 正常 | 11,328 B | `initializeCatalog` | 根据后端实际目录渲染分类、组合筛选、AI 分析结论和详情弹窗 |
-| `playground/static/js/skill-manager.js` | Skill 文件管理 | 正常 | 7,628 B | `initializeSkillManager` | 提供 ZIP 导入、脱敏导出、标签/目录联动移动、可恢复删除、可展开目录树和安全文本预览 |
-| `playground/static/js/skill-file-tree.js` | 文件树数据 | 正常 | 743 B | `groupFileTreeEntries` | 将扁平文件清单整理为可展开的目录层级并稳定排序 |
-| `playground/static/js/api.js` | API 客户端 | 正常 | 3,979 B | `apiBase`, `getRunnerConfig`, `createRun`, `getRun`, `getRatings`, `saveRatingLevels`, `saveSkillRating`, `getGitStatus`, `getGitDiff`, `fetchGitUpdates`, `pullGitUpdates`, `commitAndPushGit`, `saveGitProxyPort`, `getSkills`, `getSkillTree`, `getSkillFile`, `analyzeSkill`, `deleteSkill`, `moveSkill`, `importSkill`, `skillExportUrl`, `uploadAttachment` | 封装配置、Skill 管理、AI 分析、任务和运行状态接口 |
+| `playground/static/js/api.js` | API 客户端 | 正常 | 2,891 B | `apiBase`, `getRunnerConfig`, `createRun`, `getRun`, `getRatings`, `saveRatingLevels`, `saveSkillRating`, `getGitStatus`, `getGitDiff`, `fetchGitUpdates`, `pullGitUpdates`, `commitAndPushGit`, `saveGitProxyPort`, `getSkills`, `analyzeSkill`, `uploadAttachment` | 封装配置、目录、AI 分析、评分、Git、附件、任务和运行状态接口 |
 | `playground/static/js/artifacts.js` | 产物渲染 | 正常 | 1,760 B | `createArtifacts` | 预览图片、音频、视频、HTML 和普通文件 |
 | `playground/static/js/markdown.js` | Markdown 渲染 | 正常 | 3,694 B | `renderMarkdown` | 安全渲染标题、列表、引用、代码和外部链接，不执行原始 HTML |
 | `playground/static/js/resize.js` | 面板缩放 | 正常 | 2,691 B | `initializePanelResize` | 拖动或用键盘调整对话栏宽度，并在浏览器本地记忆 |
@@ -32,21 +30,20 @@
 | `playground/static/js/conversation-state.js` | 对话运行状态 | 正常 | 529 B | `createConversationState` | 隔离对话代次，阻止重复任务和过期轮询污染当前会话 |
 | `playground/static/js/ratings.js` | 评分交互 | 正常 | 3,845 B | `initializeRatings` | 管理 A/B/C 评分、备注和等级显示设置，并向目录筛选器同步评分元数据 |
 | `playground/static/js/git-panel.js` | Git 项目管理 | 正常 | 8,029 B | `initializeGitPanel` | 展示状态与 Diff，提供 Git 操作按钮的执行反馈，并触发 fetch、ff-only pull、选择性 commit/push |
-| `playground/static/js/app.js` | 前端编排 | 正常 | 1,258 B | — | 读取实际 Skill 目录并组合目录、管理、对话与面板缩放模块 |
-| `playground/server.py` | 本地 Runner | 正常 | 35,771 B | — | 注册原始 Skills，桥接 Codex CLI，提供运行与 AI 分析接口并执行静态资源白名单 |
-| `playground/skill_service.py` | Skill 管理服务 | 正常 | 15,106 B | — | 扫描目录，校验导入，过滤敏感文件，按维护标签移动，导出、预览、回收删除并持久化 AI 结论 |
+| `playground/static/js/app.js` | 前端编排 | 正常 | 1,169 B | — | 读取实际 Skill 目录并组合目录、评分、Git、对话与面板缩放模块 |
+| `playground/server.py` | 本地 Runner | 正常 | 31,840 B | — | 注册原始 Skills，桥接 Codex CLI，提供运行与 AI 分析接口并执行静态资源白名单 |
+| `playground/skill_service.py` | Skill 目录服务 | 正常 | 5,834 B | — | 扫描三类 Skill 目录，过滤 AI 分析输入中的敏感文件并持久化分析结论 |
 | `playground/run_registry.py` | 运行记录 | 正常 | 2,143 B | — | 以线程安全快照保存有限数量的运行状态、日志和产物元数据 |
-| `playground/rating_service.py` | 评分服务 | 正常 | 5,317 B | — | 校验并原子更新可进入 Git 的 skill-metadata.yaml |
+| `playground/rating_service.py` | 评分服务 | 正常 | 4,599 B | — | 校验并原子更新可进入 Git 的 skill-metadata.yaml |
 | `playground/git_service.py` | Git 服务 | 正常 | 10,907 B | — | 执行白名单 Git 参数、保护敏感文件并通过 GCM 推送 |
 | `skill-metadata.yaml` | 维护数据 | 正常 | 429 B | — | 保存 A/B/C 显示设置、Skill 评分和备注，随 Git 同步 |
 | `skill-insights.yaml` | AI 分析数据 | 正常 | 1,845 B | — | 保存功能分类、用途结论和仅针对恶意行为/信息窃取/系统破坏/重大资源占用的安全评估 |
-| `playground/generate_project_status.py` | 状态文档生成器 | 正常 | 12,355 B | — | 扫描模块、配置与 Skill 目录并更新本文件 |
+| `playground/generate_project_status.py` | 状态文档生成器 | 正常 | 11,135 B | — | 扫描模块、配置与 Skill 目录并更新本文件 |
 | `playground/tests/test_run_registry.py` | 后端回归测试 | 正常 | 1,710 B | — | 验证运行记录隔离、清理和活动任务保留逻辑 |
-| `playground/tests/test_skill_service.py` | Skill 管理回归测试 | 正常 | 4,493 B | — | 验证导入、脱敏导出、敏感预览拦截和可恢复删除 |
+| `playground/tests/test_skill_service.py` | Skill 目录回归测试 | 正常 | 3,283 B | — | 验证目录扫描、分析输入凭据过滤和分析结果持久化 |
 | `playground/tests/test_conversation_state.mjs` | 前端状态回归测试 | 正常 | 758 B | — | 验证重复任务拦截和旧对话代次失效逻辑 |
 | `playground/tests/test_attachments.mjs` | 附件回归测试 | 正常 | 560 B | — | 验证原始输入与一个或多个可见附件路径的组合格式 |
 | `playground/tests/test_catalog_data.mjs` | 目录数据回归测试 | 正常 | 1,033 B | — | 验证全部 Skill 的功能分类没有遗漏、重复或无效归属 |
-| `playground/tests/test_skill_file_tree.mjs` | 文件树回归测试 | 正常 | 731 B | — | 验证目录层级、父子归属和根目录排序 |
 
 ## 数据与调用关系
 
@@ -54,8 +51,7 @@
 skills-showcase.html
 └─ app.js
    ├─ data.js + /api/skills（实际目录）
-   ├─ catalog.js ──> AI 分析 ──> skill-insights.yaml
-   ├─ skill-manager.js + skill-file-tree.js ──> skill_service.py ──> Skill 目录 / .skill-trash
+   ├─ catalog.js ──> skill_service.py ──> Skill 目录 / skill-insights.yaml
    ├─ ratings.js ──> rating_service.py ──> skill-metadata.yaml
    ├─ git-panel.js ──> git_service.py ──> Git / GCM / origin
    └─ chat.js
@@ -82,13 +78,7 @@ skills-showcase.html
 | `/api/ratings/settings` | POST | 更新 A/B/C 的名称、说明和颜色 |
 | `/api/ratings/skill` | POST | 更新或清除单个 Skill 评分 |
 | `/api/skills` | GET | 扫描并返回本地实际 Skill、分类和已保存 AI 结论 |
-| `/api/skills/tree?path=...` | GET | 返回单个 Skill 的安全目录树 |
-| `/api/skills/file?path=...&file=...` | GET | 预览经过类型、大小和敏感信息检查的文本文件 |
-| `/api/skills/export?path=...` | GET | 导出自动排除凭据、密钥和缓存的 Skill ZIP |
-| `/api/skills/import` | POST | 校验 ZIP、拒绝危险文件并导入到指定来源和功能分类 |
 | `/api/skills/analyze` | POST | 调用本机 Codex 静态分析 Skill 并持久化六类结论 |
-| `/api/skills/move` | POST | 更新自创/已测/待测维护标签并移动目录及关联元数据 |
-| `/api/skills/delete` | POST | 将 Skill 移入本地 `.skill-trash` 回收目录 |
 | `/api/git/status` | GET | 读取分支、远程同步和本地改动状态 |
 | `/api/git/diff?path=...` | GET | 读取安全改动文件的文本 Diff |
 | `/api/git/fetch` | POST | 检查并刷新 origin 远程引用 |
@@ -100,7 +90,7 @@ skills-showcase.html
 
 | 分类 | 目录 | 数量 | Skill |
 |---|---|---:|---|
-| 自创 | `自创skills/` | 11 | `arxiv-search`、`douyin-video-downloader`、`gpt-image`、`html-ppt-build`、`local-credential-memory`、`mineru-to-markdown`、`ppt-technical-redesign`、`semantic-scholar-search`、`temporary-public-file-links`、`video-narration-tts`、`xiaohongshu-note-downloader` |
+| 自创 | `自创skills/` | 12 | `arxiv-search`、`douyin-video-downloader`、`gpt-image`、`html-ppt-build`、`local-credential-memory`、`manage-myskills`、`mineru-to-markdown`、`ppt-technical-redesign`、`semantic-scholar-search`、`temporary-public-file-links`、`video-narration-tts`、`xiaohongshu-note-downloader` |
 | 已测 | `已测skills/` | 7 | `codex-ppt-skill`、`dashiai-ppt`、`imagegen`、`openai-docs`、`professor-synapse`、`skill-creator`、`skill-installer` |
 | 待测 | `待测skills/` | 20 | `canvas-design`、`create-plan`、`develop-web-game`、`docx`、`films-search`、`frontend-design`、`frontend-slides`、`imap-smtp-email`、`local-tools`、`music-search`、`pdf`、`playwright`、`pptx`、`remotion`、`scheduled-task`、`seedance`、`seedream`、`technology-news-search`、`web-search`、`xlsx` |
 

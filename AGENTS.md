@@ -4,7 +4,7 @@
 
 ## 项目用途
 
-这是个人维护的 Codex skills 仓库。Skill 按来源和验证状态分为自创、已测、待测三类，并通过静态 HTML 页面提供目录导航。README 只负责项目安装、配置、启动和使用说明，不维护易过期的 Skill 数量与名单。
+这是个人维护的 Codex skills 仓库。Skill 按来源和验证状态分为自创、已测、待测三类，并通过静态 HTML 页面提供目录导航。页面负责浏览、分析、评分和执行；仓库内置的 `manage-myskills` Skill 是搜索、导入和增删改查的统一维护入口。README 只负责项目安装、配置、启动和使用说明，不维护易过期的 Skill 数量与名单。
 
 ## 项目结构
 
@@ -23,7 +23,7 @@ myskills/
 │   ├── run_registry.py        # 线程安全且有界的运行记录存储
 │   ├── rating_service.py      # Skill 评分读取、校验与原子持久化
 │   ├── git_service.py         # Git 状态、Diff、ff-only pull 与选择性 commit/push
-│   ├── skill_service.py       # Skill 扫描、导入导出、文件预览、回收删除和 AI 结论持久化
+│   ├── skill_service.py       # Skill 扫描、AI 分析文本收集与结论持久化
 │   ├── generate_project_status.py # PROJECT_STATUS.md 自动生成器
 │   ├── tests/                 # 后端状态与前端纯逻辑回归测试
 │   └── static/
@@ -37,15 +37,13 @@ myskills/
 │           ├── attachment-prompt.js # 用户输入与可见附件路径的纯组合逻辑
 │           ├── conversation-state.js # 防止重复任务与旧轮询污染的纯状态模块
 │           ├── api.js         # Runner API 客户端
-│           ├── skill-file-tree.js # 文件树层级分组纯逻辑
 │           ├── artifacts.js   # 运行产物预览
 │           ├── markdown.js    # 安全 Markdown 回复渲染
 │           ├── resize.js      # 左右面板拖动缩放与宽度记忆
 │           ├── ratings.js     # 卡片评分元数据和等级自定义
-│           ├── skill-manager.js # Skill 导入、导出、删除、目录树和文件预览交互
 │           └── git-panel.js   # Git/GCM 项目管理界面
 ├── .runs/                     # 本地运行产物，不进入 Git
-├── .skill-trash/              # 页面删除 Skill 的本地回收目录，不进入 Git
+├── .skill-trash/              # 管理智能体删除 Skill 时使用的本地回收目录，不进入 Git
 ├── .gitignore                 # 密钥、缓存、运行产物等忽略规则
 ├── 自创skills/                # 自主创建或深度定制的 skills
 ├── 已测skills/                # 已经过实际使用或验证的 skills
@@ -59,7 +57,7 @@ myskills/
 - `待测skills/`：已收集但尚未完成兼容性、依赖、安全性或实际效果验证。
 - Skill 完成验证后，应从 `待测skills/` 移动到 `已测skills/`，不要在两个目录保留重复副本。
 - 自创 skill 即使已经测试，也继续放在 `自创skills/`；其测试状态通过 Git 历史和文档说明维护。
-- 页面中的维护标签是目录位置的唯一来源：标记为“自创 / 已测 / 待测”时，Skill 必须分别位于 `自创skills/`、`已测skills/`、`待测skills/`。人工更新标签必须移动整个目录，并同步迁移 `skill-metadata.yaml` 与 `skill-insights.yaml` 中的路径键。
+- 维护分类以目录位置为准：标记为“自创 / 已测 / 待测”时，Skill 必须分别位于 `自创skills/`、`已测skills/`、`待测skills/`。通过 `manage-myskills` 更新分类时必须移动整个目录，并同步迁移 `skill-metadata.yaml` 与 `skill-insights.yaml` 中的路径键。
 
 ## Skill 变更时必须同步文档
 
@@ -67,9 +65,9 @@ myskills/
 
 1. 展示页、实际目录扫描与 `playground/static/js/data.js`
 
-   - 页面通过 `/api/skills` 扫描实际目录并动态更新总数；已有 Skill 的默认功能分类仍由 `skillCategories` 指定且只能有一个，页面导入的新 Skill 分类保存在 `skill-insights.yaml`。
+   - 页面通过 `/api/skills` 扫描实际目录并动态更新总数；已有 Skill 的默认功能分类仍由 `skillCategories` 指定且只能有一个，新增 Skill 的功能分类保存在 `skill-insights.yaml` 或按需加入 `skillCategories`。
    - 功能分类负责主导航；来源（自创/收集）、测试状态（已测/待测/未标注）和评分只作为组合筛选条件。
-   - 自创 skill 变化时，更新 HTML 中的静态卡片和 `data.js` 的 `skillDetails` 详情数据。
+   - 页面不维护静态 Skill 卡片；自创 Skill 需要定制详情时，更新 `data.js` 的 `skillDetails` 数据。
    - 已测或待测 skill 变化时，更新 `data.js` 的 `repositorySkills` 名称、目录、状态、简介和 `SKILL.md` 章节。
    - Skill 在 `已测skills/` 与 `待测skills/` 之间移动时，只保留新状态的数据条目。
    - 保证每个实际 skill 都能在页面中找到，并可点击打开详细信息。
@@ -106,9 +104,9 @@ myskills/
 
 Skill 评分、备注与 A/B/C 显示设置统一写入 `skill-metadata.yaml`，该文件需要进入 Git 以便多设备同步。评分写入不得改动 Skill 本体；Skill 删除或移动后应同步清理或迁移对应评分路径。
 
-AI 分析结论统一写入 `skill-insights.yaml`，只允许包含使用条件、解决的问题、使用场景、附件、最终结果、安全风险评估、模型和更新时间。安全风险评估只检查恶意代码、敏感信息或凭据窃取、重大系统破坏和明显或失控的资源占用；不得输出使用建议，不得把版权、平台规则、正常联网、普通文件保存或一般功能边界列为安全风险。AI 分析是独立的静态分析功能，不得通过 Runner 注入额外提示，也不得执行被分析 Skill。导入导出和文件预览必须复用 `skill_service.py` 的路径与敏感文件检查；页面删除只能移动到 `.skill-trash/`。
+AI 分析结论统一写入 `skill-insights.yaml`，只允许包含使用条件、解决的问题、使用场景、附件、最终结果、安全风险评估、模型和更新时间。安全风险评估只检查恶意代码、敏感信息或凭据窃取、重大系统破坏和明显或失控的资源占用；不得输出使用建议，不得把版权、平台规则、正常联网、普通文件保存或一般功能边界列为安全风险。AI 分析是独立的静态分析功能，不得通过 Runner 注入额外提示，也不得执行被分析 Skill。
 
-维护标签更新必须复用 `skill_service.py` 的受限移动逻辑，禁止覆盖目标目录中的同名 Skill，运行中禁止移动；移动成功后必须重新注册项目 Skill、刷新状态文档，并通过 `rating_service.py` 迁移评分和备注路径。
+Skill 的搜索、导入、创建、编辑、移动、删除和恢复统一通过 `manage-myskills` 智能体执行。它必须遵循本文件的分类、凭据、元数据迁移、测试、重启和 Git 规则；禁止覆盖同名 Skill，删除只移动到 `.skill-trash/`，目录变化后必须迁移评分与分析数据并重新生成状态文档。
 
 Runner 必须保持提示词透明：只允许把页面选择转换为 Codex 原生的 `$skill-name` 显式 Skill 标记，并在其后原样附加用户输入。不得在 Runner 中加入输出格式、产物目录、回答风格、自检、真实性检查、“不要撒谎”或其他会改变 Skill 原始效果的隐藏指令。需要这些行为时只能修改对应 Skill，并按 Skill 变更规则同步文档。
 
@@ -126,17 +124,17 @@ Runner 必须保持提示词透明：只允许把页面选择转换为 Codex 原
 - 不把运行产物、缓存、下载文件或生成媒体提交到 skill 源码目录，除非它们是明确需要版本控制的示例或资产。
 - 在推送前确认 Git 暂存区不含任何敏感文件或意外生成物。
 - Playground 通过本机 Codex CLI 执行任务，默认可能拥有 `danger-full-access`；服务必须保持绑定 `127.0.0.1`，不得在没有额外认证与权限隔离的情况下暴露到局域网或公网。
-- 本地 HTTP 服务只允许直接公开 `skills-showcase.html` 与 `playground/static/` 下的页面资源。Skill 源码只能通过路径受限、类型受限、大小受限且会屏蔽敏感文件的 `/api/skills/file` 读取；不得使用仓库根目录通用静态服务暴露 `.env`、`.git`、配置文件或其他本地文件。
+- 本地 HTTP 服务只允许直接公开 `skills-showcase.html` 与 `playground/static/` 下的页面资源；不得使用仓库根目录通用静态服务暴露 Skill 源码、`.env`、`.git`、配置文件或其他本地文件。
 
 ## Git 与维护边界
 
 - 保留用户已有的未提交改动，不覆盖或回滚无关内容。
 - 只提交当前任务涉及的 skill、展示页和必要维护文件。只有安装、配置、启动或使用方式变化时才同步 README。
 - 不使用破坏性 Git 操作清理工作区。
-- 只有用户明确要求时才推送远程仓库。
+- 项目修改完成后按用户约定提交并推送；只读调查不产生提交。
 - Playground 的项目管理只能执行代码中明确列出的 Git 子命令；拉取固定使用 `git pull --ff-only`。
 - 网页 commit 必须由用户明确勾选文件，不得使用 `git add -A`；敏感文件、运行产物和外部已暂存改动必须阻止。
 - 网页 commit 成功后必须立即 push 当前分支；push 失败时保留本地 commit 并清楚报告 commit ID，不自动回滚。
 - PAT 只由系统 Git Credential Manager 保存和提供。不得在网页、项目配置、日志、Local Storage 或仓库文件中读取、输入、缓存或显示 PAT。
 - Git 代理端口保存在 `config.yaml`，只允许 0–65535 的整数；`0` 表示关闭。代理应通过单次 Git 命令参数生效，不修改用户的系统代理或全局 Git 配置。
-- 后续增加 Skill 创建、编辑或移动功能时，必须复用本节安全边界，并同时更新展示数据和 `PROJECT_STATUS.md`；只有用户使用流程发生变化时才更新 README。
+- `manage-myskills` 执行 Skill 创建、编辑或移动时，必须复用本节安全边界，并同时更新展示数据和 `PROJECT_STATUS.md`；只有用户使用流程发生变化时才更新 README。

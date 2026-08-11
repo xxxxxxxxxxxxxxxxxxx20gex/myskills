@@ -28,7 +28,6 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "config.yaml"
 ENV_PATH = ROOT / ".env"
 SKILL_FOLDERS = ("自创skills", "已测skills", "待测skills")
-RUNS = RunRegistry(max_records=200)
 PROJECT_SKILLS_ROOT = ROOT / ".agents" / "skills"
 
 
@@ -58,6 +57,7 @@ CONFIG_LOCK = threading.Lock()
 LOCAL_ENV = load_env(ENV_PATH)
 RUNS_ROOT = (ROOT / CONFIG["runs"]["directory"]).resolve()
 RUNS_ROOT.mkdir(parents=True, exist_ok=True)
+RUNS = RunRegistry(max_records=200, storage_path=RUNS_ROOT / "registry.json")
 UPLOADS_ROOT = RUNS_ROOT / "uploads"
 UPLOADS_ROOT.mkdir(parents=True, exist_ok=True)
 RATINGS = RatingService(ROOT, SKILL_FOLDERS)
@@ -148,6 +148,8 @@ def redact(value: str) -> str:
 def build_process_env() -> dict[str, str]:
     process_env = os.environ.copy()
     process_env.update(LOCAL_ENV)
+    process_env["MYSKILLS_PLAYGROUND_RUN"] = "1"
+    process_env["MYSKILLS_PLAYGROUND_URL"] = f"http://{CONFIG['server']['host']}:{CONFIG['server']['port']}"
     if LOCAL_ENV.get("baseurl"):
         process_env["OPENAI_BASE_URL"] = LOCAL_ENV["baseurl"]
     if LOCAL_ENV.get("apikey"):
@@ -713,6 +715,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.json_response(200, RATINGS.load())
             return
         if path == "/api/skills":
+            register_project_skills()
             self.json_response(200, SKILLS.list_skills())
             return
         if path == "/api/git/status":

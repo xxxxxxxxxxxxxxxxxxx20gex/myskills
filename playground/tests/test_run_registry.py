@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from playground.run_registry import RunRegistry
 
@@ -45,6 +47,30 @@ class RunRegistryTests(unittest.TestCase):
         self.assertTrue(registry.has_active())
         self.assertEqual(registry.snapshot("active")["status"], "running")
         self.assertEqual(registry.snapshot("second")["status"], "running")
+
+    def test_completed_records_survive_restart(self) -> None:
+        with TemporaryDirectory() as temporary:
+            path = Path(temporary) / "registry.json"
+            registry = RunRegistry(storage_path=path)
+            registry.add(make_run("completed"))
+            registry.append_log("completed", "done")
+
+            restored = RunRegistry(storage_path=path).snapshot("completed")
+
+            self.assertEqual(restored["status"], "completed")
+            self.assertEqual(restored["logs"], ["done"])
+
+    def test_running_record_is_marked_interrupted_after_restart(self) -> None:
+        with TemporaryDirectory() as temporary:
+            path = Path(temporary) / "registry.json"
+            registry = RunRegistry(storage_path=path)
+            registry.add(make_run("active", status="running"))
+
+            restored = RunRegistry(storage_path=path).snapshot("active")
+
+            self.assertEqual(restored["status"], "failed")
+            self.assertIn("重启", restored["error"])
+            self.assertTrue(restored["finished_at"])
 
 
 if __name__ == "__main__":

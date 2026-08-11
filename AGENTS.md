@@ -20,7 +20,7 @@ myskills/
 ├── start-playground.ps1       # 本地执行器启动脚本
 ├── playground/                # Playground 后端与模块化静态资源
 │   ├── server.py              # Codex CLI 桥接、运行状态和产物服务
-│   ├── run_registry.py        # 线程安全且有界的运行记录存储
+│   ├── run_registry.py        # 线程安全、有界且可跨服务重启恢复的运行记录存储
 │   ├── rating_service.py      # Skill 评分读取、校验与原子持久化
 │   ├── git_service.py         # Git 状态、Diff、ff-only pull 与选择性 commit/push
 │   ├── skill_service.py       # Skill 扫描、AI 分析文本收集与结论持久化
@@ -114,7 +114,9 @@ Runner 必须保持提示词透明：只允许把页面选择转换为 Codex 原
 
 服务启动时通过 `.agents/skills/` 符号链接向 Codex 注册三个分类目录中的原始 Skill；该目录是生成状态并被 Git 忽略。链接必须指向实际 Skill 目录，不复制 `SKILL.md`，以免测试到过期副本。
 
-每次修改 Skill Playground 的前端、后端、启动脚本或运行配置后，交付前必须重启本地服务，并确认 `http://127.0.0.1:8765` 可访问、`/api/config` 返回正常。除非用户明确要求停止，否则验证完成后保持服务运行。
+每次修改 Skill Playground 的前端、后端、启动脚本或运行配置后，交付前必须重启本地服务，并确认 `http://127.0.0.1:8765` 可访问、`/api/config` 返回正常。唯一例外是任务本身通过 Playground 执行且环境中存在 `MYSKILLS_PLAYGROUND_RUN=1`：运行中的智能体禁止停止或重启承载自己的服务，Skill 目录变化应通过访问 `/api/skills` 动态重新注册；静态资源通过刷新页面生效；确实需要重载的后端变化必须在回复中明确标记“需要重启”，等待当前任务结果送达后再由外部流程重启。
+
+运行记录持久化到 `.runs/registry.json`。服务重启后，已完成记录应继续可查询；重启时仍处于运行状态的记录必须恢复为带有明确中断原因的失败状态，不得退化为“运行记录不存在”。前端轮询遇到短暂网络中断时应自动重连，但不得自动重复创建任务。
 
 ## 安全规则
 

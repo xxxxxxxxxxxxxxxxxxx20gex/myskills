@@ -9,7 +9,9 @@ async function requestJson(path, options = {}) {
     payload = {};
   }
   if (!response.ok) {
-    throw new Error(payload.error || `请求失败：HTTP ${response.status}`);
+    const error = new Error(payload.error || `请求失败：HTTP ${response.status}`);
+    error.status = response.status;
+    throw error;
   }
   return payload;
 }

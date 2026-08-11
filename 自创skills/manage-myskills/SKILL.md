@@ -81,7 +81,9 @@ After every repository mutation:
 3. Run `python playground/generate_project_status.py`; do not hand-edit generated tables.
 4. Validate every added or modified Skill with the repository validator or the `skill-creator` validator.
 5. Run all relevant Python and JavaScript regression tests plus `git diff --check`.
-6. Restart the Playground, keep it bound to `127.0.0.1`, and verify `/`, `/api/config`, and `/api/skills`.
+6. Handle the Playground runtime safely:
+   - When `MYSKILLS_PLAYGROUND_RUN=1`, the current task is hosted by the Playground. Never stop, kill, restart, or replace the process serving `MYSKILLS_PLAYGROUND_URL`; doing so would terminate the active task. Request `/api/skills` after Skill directory changes to refresh project registration, then verify the existing `/`, `/api/config`, and `/api/skills` endpoints. Static page changes take effect after a browser reload. If backend or startup changes truly require a process restart, report `restart required` and defer it until after the current web task has returned.
+   - Outside a Playground-hosted task, restart the Playground normally, keep it bound to `127.0.0.1`, and verify `/`, `/api/config`, and `/api/skills`.
 7. Inspect the explicit staged file list and scan it for secrets. Never use `git add -A` and never stage `.env`, `.runs/`, `.skill-trash/`, credentials, or unrelated user changes.
 8. Commit the completed mutation and push the current branch immediately through Git Credential Manager. Use the project proxy configuration when needed. If push fails, preserve the local commit and report its ID.
 
@@ -89,4 +91,4 @@ Do not commit merely read-only investigation. Do not modify or install a second 
 
 ## Completion report
 
-Lead with the outcome. State the affected Skill paths, classification, validation and regression results, restart status, commit ID, push result, and any intentionally preserved local changes. Redact every credential.
+Lead with the outcome. State the affected Skill paths, classification, validation and regression results, whether restart was completed or safely deferred, commit ID, push result, and any intentionally preserved local changes. Redact every credential.

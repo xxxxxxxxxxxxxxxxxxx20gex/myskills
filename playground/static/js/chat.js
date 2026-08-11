@@ -4,6 +4,9 @@ import { createArtifacts } from './artifacts.js';
 import { createConversationState } from './conversation-state.js';
 import { renderMarkdown } from './markdown.js';
 
+const POLL_RETRY_LIMIT = 8;
+const POLL_RETRY_DELAY_MS = 1200;
+
 export function initializeChat(details, initialPath) {
   const runnerSkill = document.getElementById('runner-skill');
   const runnerModel = document.getElementById('runner-model');
@@ -122,7 +125,7 @@ export function initializeChat(details, initialPath) {
     }
   }
 
-  async function pollRun(runId, token) {
+  async function pollRun(runId, token, retryCount = 0) {
     try {
       const run = await getRun(runId);
       if (!conversation.isCurrent(token)) return;
@@ -144,6 +147,15 @@ export function initializeChat(details, initialPath) {
         appendMessage('assistant', `执行失败：${run.error || '未知错误'}`);
       }
     } catch (error) {
+      const retryable = !error.status || error.status >= 500;
+      if (conversation.isCurrent(token) && retryable && retryCount < POLL_RETRY_LIMIT) {
+        setRunnerStatus('running', `执行服务短暂断开，正在重新连接（${retryCount + 1}/${POLL_RETRY_LIMIT}）……`);
+        pollTimer = window.setTimeout(
+          () => pollRun(runId, token, retryCount + 1),
+          POLL_RETRY_DELAY_MS,
+        );
+        return;
+      }
       if (!conversation.finish(token)) return;
       renderRunning(false);
       setRunnerStatus('failed', error.message);

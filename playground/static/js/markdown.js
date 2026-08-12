@@ -7,15 +7,24 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
-function renderInline(value) {
+function renderInline(value, options = {}) {
   const protectedFragments = [];
   const protect = html => `\u0000${protectedFragments.push(html) - 1}\u0000`;
   let text = escapeHtml(value);
 
   text = text.replace(/`([^`\n]+)`/g, (_, code) => protect(`<code>${code}</code>`));
-  text = text.replace(/\[([^\]]+)]\((https?:\/\/[^\s)]+)\)/g, (_, label, href) => (
-    protect(`<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>`)
-  ));
+  text = text.replace(/\[([^\]]+)]\((https?:\/\/[^\s)]+|[A-Za-z]:[\\/][^\s)]+)\)/g, (_, label, href) => {
+    const resolved = href.startsWith('http') ? href : options.resolveFile?.(href);
+    return resolved ? protect(`<a href="${resolved}" target="_blank" rel="noopener noreferrer">${label}</a>`) : `[${label}](${href})`;
+  });
+  if (options.resolveFile) {
+    text = text.replace(/(?:[A-Za-z]:[\\/][^\s<>&]+|\\\\[^\s<>&]+)/g, match => {
+      const trailing = match.match(/[.,;:!?]+$/)?.[0] || '';
+      const path = trailing ? match.slice(0, -trailing.length) : match;
+      const href = options.resolveFile(path);
+      return href ? protect(`<a class="workspace-file-link" href="${href}" target="_blank" rel="noopener noreferrer">${path}</a>${trailing}`) : match;
+    });
+  }
   text = text
     .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
     .replace(/__([^_\n]+)__/g, '<strong>$1</strong>')
@@ -88,7 +97,7 @@ function startsBlock(line) {
   return /^\s*$|^```|^#{1,6}\s+|^\s*>\s?|^\s*[-*+]\s+|^\s*\d+[.)]\s+|^\s*(?:---+|___+|\*\*\*+)\s*$/.test(line);
 }
 
-export function renderMarkdown(markdown) {
+export function renderMarkdown(markdown, options = {}) {
   const lines = String(markdown ?? '').replaceAll('\r\n', '\n').split('\n');
   const output = [];
   let index = 0;
@@ -112,10 +121,10 @@ export function renderMarkdown(markdown) {
     if (table) {
       closeList();
       const header = table.headers.map((cell, cellIndex) => (
-        `<th class="align-${table.alignments[cellIndex]}">${renderInline(cell)}</th>`
+        `<th class="align-${table.alignments[cellIndex]}">${renderInline(cell, options)}</th>`
       )).join('');
       const body = table.rows.map(row => `<tr>${row.map((cell, cellIndex) => (
-        `<td class="align-${table.alignments[cellIndex]}">${renderInline(cell)}</td>`
+        `<td class="align-${table.alignments[cellIndex]}">${renderInline(cell, options)}</td>`
       )).join('')}</tr>`).join('');
       output.push(`<div class="markdown-table-wrap"><table><thead><tr>${header}</tr></thead>${body ? `<tbody>${body}</tbody>` : ''}</table></div>`);
       index = table.nextIndex;
@@ -141,7 +150,7 @@ export function renderMarkdown(markdown) {
     if (heading) {
       closeList();
       const level = heading[1].length;
-      output.push(`<h${level}>${renderInline(heading[2])}</h${level}>`);
+      output.push(`<h${level}>${renderInline(heading[2], options)}</h${level}>`);
       index += 1;
       continue;
     }
@@ -164,7 +173,7 @@ export function renderMarkdown(markdown) {
         quoteLines.push(nextQuote[1]);
         index += 1;
       }
-      output.push(`<blockquote>${quoteLines.map(renderInline).join('<br>')}</blockquote>`);
+      output.push(`<blockquote>${quoteLines.map(line => renderInline(line, options)).join('<br>')}</blockquote>`);
       continue;
     }
 
@@ -181,9 +190,9 @@ export function renderMarkdown(markdown) {
       }
       if (task) {
         const checked = task[1].toLowerCase() === 'x' ? ' checked' : '';
-        output.push(`<li class="task-list-item"><input class="task-list-checkbox" type="checkbox" disabled${checked}>${renderInline(task[2])}</li>`);
+        output.push(`<li class="task-list-item"><input class="task-list-checkbox" type="checkbox" disabled${checked}>${renderInline(task[2], options)}</li>`);
       } else {
-        output.push(`<li>${renderInline(content)}</li>`);
+        output.push(`<li>${renderInline(content, options)}</li>`);
       }
       index += 1;
       continue;
@@ -196,7 +205,7 @@ export function renderMarkdown(markdown) {
       paragraph.push(lines[index]);
       index += 1;
     }
-    output.push(`<p>${paragraph.map(renderInline).join('<br>')}</p>`);
+    output.push(`<p>${paragraph.map(line => renderInline(line, options)).join('<br>')}</p>`);
   }
 
   closeList();

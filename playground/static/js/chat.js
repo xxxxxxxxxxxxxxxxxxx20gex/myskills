@@ -131,7 +131,7 @@ export function initializeChat(details, initialPath) {
     );
   }
 
-  function appendMessage(role, text, artifacts = []) {
+  function appendMessage(role, text, artifacts = [], runId = '') {
     chatEmpty.hidden = true;
     const message = document.createElement('article');
     message.className = `message ${role}`;
@@ -142,7 +142,9 @@ export function initializeChat(details, initialPath) {
     bubble.className = 'message-bubble';
     if (role === 'assistant') {
       bubble.classList.add('markdown-body');
-      bubble.innerHTML = renderMarkdown(text);
+      bubble.innerHTML = renderMarkdown(text, {
+        resolveFile: path => runId ? `${apiBase}/api/runs/${runId}/workspace?path=${encodeURIComponent(path)}` : '',
+      });
     } else {
       bubble.textContent = text;
     }
@@ -194,10 +196,10 @@ export function initializeChat(details, initialPath) {
       if (run.status === 'completed') {
         codexSessionId = run.session_id || codexSessionId;
         setRunnerStatus('ready', '等待你的下一条消息');
-        appendMessage('assistant', run.result || '已完成，没有返回文字结果。', run.artifacts || []);
+        appendMessage('assistant', run.result || '已完成，没有返回文字结果。', run.artifacts || [], run.id);
       } else if (run.status === 'canceled') {
         setRunnerStatus('ready', '任务已停止，可以继续输入');
-        appendMessage('assistant', run.result || '任务已停止。', run.artifacts || []);
+        appendMessage('assistant', run.result || '任务已停止。', run.artifacts || [], run.id);
       } else {
         setRunnerStatus('failed', run.error || '执行失败');
         appendMessage('assistant', `执行失败：${run.error || '未知错误'}`);

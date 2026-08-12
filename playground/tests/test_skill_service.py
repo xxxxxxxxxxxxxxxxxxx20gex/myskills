@@ -65,6 +65,15 @@ class SkillServiceTests(unittest.TestCase):
         self.assertNotIn("SECRET=value", source)
         self.assertNotIn("PRIVATE", source)
 
+    def test_analysis_source_prioritizes_skill_and_excludes_licenses(self) -> None:
+        (self.skill / "LICENSE.txt").write_text("LICENSE NOISE", encoding="utf-8")
+        (self.skill / "Font-OFL.txt").write_text("FONT LICENSE NOISE", encoding="utf-8")
+        source = self.service.analysis_source("自创skills/sample")
+        self.assertTrue(source.lstrip().startswith("--- FILE: SKILL.md ---"))
+        self.assertIn("script.py", source)
+        self.assertNotIn("LICENSE NOISE", source)
+        self.assertNotIn("FONT LICENSE NOISE", source)
+
     def test_save_analysis_preserves_category(self) -> None:
         self.service.metadata_path.write_text(
             "version: 1\nskills:\n  自创skills/sample:\n    category: system\n",

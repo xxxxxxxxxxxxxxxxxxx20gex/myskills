@@ -307,6 +307,33 @@ def artifact_list(run_id: str, run_dir: Path) -> list[dict[str, str]]:
     return items
 
 
+def uses_project_workspace(skill_relative: str, skill_name: str) -> bool:
+    """Only the repository-management Skill may work directly in the project root."""
+    return skill_relative == "自创skills/manage-myskills" or skill_name == "manage-myskills"
+
+
+def resolve_workspace_file(run_id: str, raw_path: str) -> Path:
+    candidate = Path(raw_path.strip().strip('"\'`')).expanduser().resolve()
+    root = ROOT.resolve()
+    run_workspace = safe_relative(RUNS_ROOT, run_id).resolve() / "workspace"
+    in_run_workspace = candidate == run_workspace or run_workspace in candidate.parents
+    in_project = candidate == root or root in candidate.parents
+    if not in_run_workspace and not in_project:
+        raise ValueError("文件不在项目目录中")
+    relative = candidate.relative_to(root)
+    blocked = {".git", ".agents", "node_modules", "__pycache__"}
+    if not in_run_workspace:
+        blocked.add(".runs")
+    if any(part.lower() in blocked for part in relative.parts):
+        raise ValueError("该文件不允许在对话中打开")
+    name = candidate.name.lower()
+    if name == ".env" or name.startswith(".env.") or name.startswith("secrets.") or name.endswith((".pem", ".key", ".p12", ".pfx", ".crt")):
+        raise ValueError("敏感文件不允许在对话中打开")
+    if not candidate.is_file() or candidate.stat().st_size > 50 * 1024 * 1024:
+        raise FileNotFoundError(raw_path)
+    return candidate
+
+
 def run_agent(
     run_id: str,
     skill_relative: str,
@@ -331,6 +358,8 @@ def run_agent(
 
         selected_skill_name = read_skill_name(skill)
         cli_prompt = f"${selected_skill_name}\n\n{prompt}"
+        execution_workspace = ROOT if uses_project_workspace(skill_relative, selected_skill_name) else run_dir / "workspace"
+        execution_workspace.mkdir(parents=True, exist_ok=True)
 
         cli_config = CONFIG.get("codex_cli", {})
         command = [
@@ -340,7 +369,7 @@ def run_agent(
             "-m", model["api_model"],
         ]
         if not session_id:
-            command.extend(["-C", str(ROOT)])
+            command.extend(["-C", str(execution_workspace)])
         command.append("exec")
         if session_id:
             command.extend(["resume", "--json", session_id, "-"])
@@ -350,7 +379,7 @@ def run_agent(
         creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         process = subprocess.Popen(
             command,
-            cwd=ROOT,
+            cwd=execution_workspace,
             env=build_process_env(),
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -480,15 +509,23 @@ def analyze_skill(skill_relative: str, model_id: str) -> dict[str, Any]:
 
 请只根据文件内容输出一个 JSON 对象，不要输出 Markdown 或解释。字段必须严格为：
 {{
-  "usage_conditions": ["何时应触发、需要哪些输入或前置条件"],
-  "problems_solved": ["主要解决的问题"],
-  "use_cases": ["具体使用场景"],
-  "attachments": {{"produces": "yes|no|conditional", "types": ["可能产生的附件类型"], "notes": "简短说明"}},
-  "final_results": ["用户最终能得到的结果"],
+  "usage_conditions": ["运行所需的 API Key、账号、软件、命令、运行时、操作系统、网络、权限或必须搭配的其他 Skill；没有就明确写无需额外条件"],
+  "input_requirements": ["用户实际要提供的内容、文件、链接和关键参数；说明可直接怎样用自然语言描述任务"],
+  "problems_solved": ["它替用户完成的具体工作"],
+  "use_cases": ["可以直接照着提问的典型任务示例"],
+  "attachments": {{"produces": "yes|no|conditional", "types": ["扩展名/文件类型 + 文件内容或样式，例如 PNG 海报、PDF 可打印视觉稿"], "notes": "什么情况下产生、数量或组织方式"}},
+  "final_results": ["一次运行后用户实际拿到的文件、文本、数据或已完成操作"],
   "risk_assessment": {{"level": "low|medium|high", "summary": "一句话安全结论", "risks": ["有代码证据支持的安全风险；没有则写未发现明确安全风险"]}}
 }}
 
-要求：每个数组 1–6 项；没有附件时 types 为空数组；不要臆造文件中没有依据的能力。
+分析目标是让专业用户在使用前 30 秒内知道“它能干什么、我要给什么、会拿到什么、能否在本机运行”。要求：
+- 首先以 SKILL.md 的 name、description、工作流和输出要求判断 Skill 主用途；脚本用于确认依赖与真实产物。许可证、字体说明、示例内容和依赖文档只能作为辅助证据，绝不能当作 Skill 主功能。
+- 每个数组 1–6 项，每项只说一个事实，使用普通、具体、可操作的中文；禁止“提升效率”“提供支持”“帮助理解”“适用于相关场景”等空话。
+- usage_conditions 只写执行前提，不写触发场景。明确指出 API Key/环境变量名称、外部软件、Python/Node 等运行时、系统限制、联网、权限及必须搭配的 Skill。文件未要求时写“无需额外 API Key/外部服务”。
+- input_requirements 必须说明用户应提供什么。若接受自然语言，给一个简短句式示例；若接受文件或 URL，写清类型；不得把 Skill 内部文件当用户输入。
+- use_cases 写成具体任务，例如“根据品牌名称、文案和 A4 尺寸生成一张极简海报”，不能复述 problems_solved。
+- attachments 必须结合工作流和输出要求判断。会生成文件时 produces=\"yes\"，并逐项写清扩展名、内容和典型形态；可能生成才用 conditional；没有附件时 types 为空数组。
+- final_results 只写真实交付，不重复功能介绍。不要臆造文件中没有依据的能力。
 
 风险评估只能检查以下四类安全问题：
 1. 病毒、木马、后门、恶意下载执行、混淆载荷或持久化行为；
@@ -560,6 +597,7 @@ Skill 路径：{skill_relative}
         level = "medium"
     normalized = {
         "usage_conditions": _analysis_list(payload.get("usage_conditions"), "usage_conditions"),
+        "input_requirements": _analysis_list(payload.get("input_requirements"), "input_requirements"),
         "problems_solved": _analysis_list(payload.get("problems_solved"), "problems_solved"),
         "use_cases": _analysis_list(payload.get("use_cases"), "use_cases"),
         "attachments": {
@@ -828,6 +866,21 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_header("Content-Length", str(path.stat().st_size))
                 self.end_headers()
                 with path.open("rb") as stream:
+                    self.wfile.write(stream.read())
+                return
+            if len(parts) == 5 and parts[4] == "workspace":
+                try:
+                    query = urllib.parse.parse_qs(parsed.query)
+                    target = resolve_workspace_file(parts[3], str((query.get("path") or [""])[0]))
+                except Exception:
+                    self.send_error(404)
+                    return
+                self.send_response(200)
+                self.send_header("Content-Type", mimetypes.guess_type(target.name)[0] or "application/octet-stream")
+                self.send_header("Content-Disposition", f"inline; filename*=UTF-8''{urllib.parse.quote(target.name)}")
+                self.send_header("Content-Length", str(target.stat().st_size))
+                self.end_headers()
+                with target.open("rb") as stream:
                     self.wfile.write(stream.read())
                 return
             self.json_response(200, run)

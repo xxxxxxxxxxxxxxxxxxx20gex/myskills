@@ -27,15 +27,16 @@ function renderAnalysis(detail) {
   const analysis = detail.analysis;
   const empty = '点击“AI 分析”后生成并持久化此信息';
   listItems('dialog-conditions', analysis?.usage_conditions, empty);
+  listItems('dialog-inputs', analysis?.input_requirements, analysis ? '旧版分析未包含输入要求，请重新分析' : empty);
   listItems('dialog-problems', analysis?.problems_solved, empty);
   listItems('dialog-scenes', analysis?.use_cases, empty);
   listItems('dialog-results', analysis?.final_results, empty);
 
   const attachment = analysis?.attachments;
-  const attachmentState = { yes: '会产生附件', no: '不产生附件', conditional: '视任务而定' }[attachment?.produces] || empty;
+  const attachmentState = { yes: '会生成文件', no: '不生成文件', conditional: '部分任务会生成文件' }[attachment?.produces] || empty;
   const attachmentItems = attachment ? [
     attachmentState,
-    ...(attachment.types || []).map(type => `类型：${type}`),
+    ...(attachment.types || []),
     ...(attachment.notes ? [attachment.notes] : []),
   ] : [empty];
   listItems('dialog-attachments', attachmentItems, empty);

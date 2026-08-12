@@ -207,6 +207,7 @@
     .markdown-body pre { max-width:100%; overflow:auto; padding:10px 12px; border-radius:9px; color:#e8edf8; background:#20293a; }
     .markdown-body pre code { padding:0; color:inherit; background:transparent; }
     .markdown-body a { color:var(--blue); text-decoration-thickness:1px; text-underline-offset:2px; }
+    .markdown-body a.workspace-file-link::before { content:'↗ '; font-size:11px; }
     .markdown-body hr { margin:12px 0; border:0; border-top:1px solid #d7deeb; }
     .message-artifacts { display:grid; width:92%; grid-template-columns:1fr; gap:8px; }
     .message-artifacts .artifact-preview { min-height:60px; }

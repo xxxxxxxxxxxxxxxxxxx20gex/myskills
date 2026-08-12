@@ -22,6 +22,7 @@ TEXT_EXTENSIONS = {
     ".scss", ".ps1", ".sh", ".bat", ".cmd", ".sql", ".xml", ".csv",
 }
 IGNORED_PARTS = {".git", "__pycache__", "node_modules", ".venv", "venv", ".agents"}
+REFERENCE_ONLY_NAMES = {"license", "license.md", "license.txt", "copying", "copying.md", "copying.txt"}
 SENSITIVE_SUFFIXES = {".key", ".pem", ".p12", ".pfx", ".crt", ".cer"}
 MAX_ANALYSIS_FILE_BYTES = 512 * 1024
 MAX_ANALYSIS_CHARS = 120_000
@@ -105,7 +106,8 @@ class SkillService:
         skill = self.resolve_skill(skill_relative)
         chunks: list[str] = []
         used = 0
-        for path in sorted(skill.rglob("*")):
+        candidates = []
+        for path in skill.rglob("*"):
             if not path.is_file():
                 continue
             relative = path.relative_to(skill)
@@ -113,6 +115,13 @@ class SkillService:
                 continue
             if path.suffix.lower() not in TEXT_EXTENSIONS or path.stat().st_size > MAX_ANALYSIS_FILE_BYTES:
                 continue
+            # Licenses and bundled font notices describe third-party assets, not what the Skill does.
+            # Excluding them prevents large reference folders from overpowering SKILL.md and scripts.
+            if path.name.lower() in REFERENCE_ONLY_NAMES or path.name.lower().endswith("-ofl.txt"):
+                continue
+            priority = 0 if relative.as_posix().lower() == "skill.md" else (1 if path.suffix.lower() in {".py", ".js", ".mjs", ".ts", ".ps1", ".sh"} else 2)
+            candidates.append((priority, relative.as_posix().lower(), path, relative))
+        for _, _, path, relative in sorted(candidates):
             content = path.read_text(encoding="utf-8-sig", errors="replace")
             chunk = f"\n--- FILE: {relative.as_posix()} ---\n{content}"
             if used + len(chunk) > MAX_ANALYSIS_CHARS:

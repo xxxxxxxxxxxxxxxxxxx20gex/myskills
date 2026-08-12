@@ -16,8 +16,8 @@ async function bootstrap() {
     skillCategories,
     onRunSkill: path => chat?.selectSkill(path, true),
   }).sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
-  const initialPath = allDetails.some(detail => detail.path === '自创skills/gpt-image')
-    ? '自创skills/gpt-image'
+  const initialPath = allDetails.some(detail => detail.path === '自创skills/manage-myskills')
+    ? '自创skills/manage-myskills'
     : allDetails[0]?.path;
   chat = initializeChat(allDetails, initialPath);
   initializePanelResize();

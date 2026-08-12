@@ -9,6 +9,9 @@ const POLL_RETRY_DELAY_MS = 1200;
 
 export function initializeChat(details, initialPath) {
   const runnerSkill = document.getElementById('runner-skill');
+  const runnerSkillSearch = document.getElementById('runner-skill-search');
+  const runnerSkillToggle = document.getElementById('runner-skill-toggle');
+  const runnerSkillOptions = document.getElementById('runner-skill-options');
   const runnerModel = document.getElementById('runner-model');
   const runnerPrompt = document.getElementById('runner-prompt');
   const runButton = document.getElementById('run-button');
@@ -40,12 +43,56 @@ export function initializeChat(details, initialPath) {
     dropZone: composer,
   });
 
-  runnerSkill.replaceChildren(...details.map(detail => {
+  const skillOptions = details.map(detail => {
     const option = document.createElement('option');
     option.value = detail.path;
     option.textContent = detail.name;
     return option;
-  }));
+  });
+  runnerSkill.replaceChildren(...skillOptions);
+
+  let skillPickerOpen = false;
+  let highlightedSkillIndex = -1;
+
+  function filteredSkillDetails() {
+    const query = runnerSkillSearch.value.trim().toLocaleLowerCase();
+    return details.filter(detail => !query || `${detail.name} ${detail.path}`.toLocaleLowerCase().includes(query));
+  }
+
+  function renderSkillOptions() {
+    const filtered = filteredSkillDetails();
+    runnerSkillOptions.replaceChildren();
+    filtered.forEach((detail, index) => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'skill-picker-option';
+      item.setAttribute('role', 'option');
+      item.dataset.path = detail.path;
+      item.textContent = detail.name;
+      item.setAttribute('aria-selected', detail.path === runnerSkill.value ? 'true' : 'false');
+      if (index === highlightedSkillIndex) item.classList.add('highlighted');
+      item.addEventListener('mousedown', event => event.preventDefault());
+      item.addEventListener('click', () => selectSkill(detail.path, true));
+      runnerSkillOptions.append(item);
+    });
+    if (!filtered.length) {
+      const empty = document.createElement('p');
+      empty.className = 'skill-picker-empty';
+      empty.textContent = '没有匹配的 Skill';
+      runnerSkillOptions.append(empty);
+    }
+  }
+
+  function setSkillPickerOpen(open) {
+    skillPickerOpen = open;
+    runnerSkillOptions.hidden = !open;
+    runnerSkillSearch.setAttribute('aria-expanded', open ? 'true' : 'false');
+    document.getElementById('skill-picker').classList.toggle('open', open);
+    if (open) {
+      highlightedSkillIndex = Math.max(0, filteredSkillDetails().findIndex(detail => detail.path === runnerSkill.value));
+      renderSkillOptions();
+    }
+  }
 
   function setRunnerStatus(state, text) {
     statusDot.className = `status-dot ${state || ''}`;
@@ -55,6 +102,8 @@ export function initializeChat(details, initialPath) {
   function renderRunning(running) {
     runButton.disabled = running ? !activeRunId : !runnerConnected || !runnerConfigured;
     runnerSkill.disabled = running;
+    runnerSkillSearch.disabled = running;
+    runnerSkillToggle.disabled = running;
     runnerModel.disabled = running;
     newChatButton.disabled = running;
     attachments.setDisabled(running);
@@ -224,6 +273,8 @@ export function initializeChat(details, initialPath) {
     activeDetail = detailByPath[path] || details[0];
     if (!activeDetail) return;
     runnerSkill.value = activeDetail.path;
+    runnerSkillSearch.value = activeDetail.name;
+    setSkillPickerOpen(false);
     runnerPrompt.placeholder = `向 ${activeDetail.name} 描述任务，Enter 发送……`;
     if (reset) resetConversation();
     runnerPrompt.focus();
@@ -240,6 +291,39 @@ export function initializeChat(details, initialPath) {
     }
   });
   runnerSkill.addEventListener('change', () => selectSkill(runnerSkill.value, true));
+  runnerSkillSearch.addEventListener('focus', () => {
+    if (!conversation.running) setSkillPickerOpen(true);
+  });
+  runnerSkillSearch.addEventListener('input', () => {
+    highlightedSkillIndex = 0;
+    setSkillPickerOpen(true);
+  });
+  runnerSkillSearch.addEventListener('keydown', event => {
+    const filtered = filteredSkillDetails();
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (!skillPickerOpen) setSkillPickerOpen(true);
+      if (filtered.length) {
+        highlightedSkillIndex = (highlightedSkillIndex + (event.key === 'ArrowDown' ? 1 : -1) + filtered.length) % filtered.length;
+        renderSkillOptions();
+      }
+    } else if (event.key === 'Enter' && skillPickerOpen && filtered[highlightedSkillIndex]) {
+      event.preventDefault();
+      selectSkill(filtered[highlightedSkillIndex].path, true);
+    } else if (event.key === 'Escape') {
+      setSkillPickerOpen(false);
+      runnerSkillSearch.value = activeDetail?.name || '';
+    }
+  });
+  runnerSkillToggle.addEventListener('click', () => {
+    if (!conversation.running) {
+      setSkillPickerOpen(!skillPickerOpen);
+      runnerSkillSearch.focus();
+    }
+  });
+  document.addEventListener('click', event => {
+    if (!document.getElementById('skill-picker').contains(event.target)) setSkillPickerOpen(false);
+  });
   newChatButton.addEventListener('click', () => selectSkill(activeDetail?.path, true));
 
   selectSkill(initialPath, true);

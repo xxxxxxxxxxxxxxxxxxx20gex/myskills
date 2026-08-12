@@ -166,6 +166,14 @@
     .chat-controls .field { gap:4px; }
     .chat-controls .field label { font-size:11px; }
     .chat-controls select { height:38px; font-size:13px; }
+    .skill-picker { position:relative; }
+    .skill-picker input { height:38px; padding:0 38px 0 11px; font-size:13px; }
+    .skill-picker-toggle { position:absolute; top:0; right:0; width:38px; height:38px; border:0; color:#34405a; background:transparent; font-size:18px; cursor:pointer; }
+    .skill-picker-toggle:disabled { cursor:not-allowed; opacity:.5; }
+    .skill-picker-options { position:absolute; z-index:20; top:calc(100% + 4px); right:0; left:0; max-height:280px; overflow:auto; padding:5px; border:1px solid #cbd5e5; border-radius:10px; background:#fff; box-shadow:0 12px 28px rgba(35,48,75,.18); }
+    .skill-picker-option { display:block; width:100%; padding:8px 10px; border:0; border-radius:7px; color:#243552; background:transparent; text-align:left; font:13px inherit; cursor:pointer; }
+    .skill-picker-option:hover, .skill-picker-option.highlighted, .skill-picker-option[aria-selected="true"] { color:#173d91; background:#e7efff; }
+    .skill-picker-empty { margin:0; padding:10px; color:var(--muted); font-size:12px; }
     .chat-status { padding:7px 14px 0; min-height:28px; }
     .chat-messages { display:flex; min-height:0; overflow:auto; flex:1; flex-direction:column; gap:11px; padding:12px 14px 18px; scroll-behavior:smooth; }
     .chat-empty { margin:auto; padding:22px; color:var(--muted); text-align:center; }

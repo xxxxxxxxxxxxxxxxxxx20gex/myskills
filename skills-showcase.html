@@ -41,7 +41,7 @@
       <button id="new-chat" class="new-chat" type="button">新对话</button>
     </div>
     <div class="chat-controls">
-      <div class="field"><label for="runner-skill">Skill</label><select id="runner-skill"></select></div>
+      <div class="field skill-picker-field"><label for="runner-skill-search">Skill</label><div class="skill-picker" id="skill-picker"><input id="runner-skill-search" type="search" autocomplete="off" placeholder="搜索 Skill 名称…" role="combobox" aria-autocomplete="list" aria-controls="runner-skill-options" aria-expanded="false"><button id="runner-skill-toggle" class="skill-picker-toggle" type="button" aria-label="展开 Skill 列表" tabindex="-1">⌄</button><div id="runner-skill-options" class="skill-picker-options" role="listbox" hidden></div></div><select id="runner-skill" hidden aria-hidden="true"></select></div>
       <div class="field"><label for="runner-model">模型</label><select id="runner-model"></select></div>
     </div>
     <div class="runner-status chat-status"><span id="runner-status-dot" class="status-dot"></span><span id="runner-status-text">正在连接本地执行服务……</span></div>

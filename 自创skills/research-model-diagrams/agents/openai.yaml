@@ -1,0 +1,4 @@
+interface:
+  display_name: "科研模型框架图"
+  short_description: "依据论文与代码绘制科研模型框架图，支持中文说明、英文算法标签和可编辑矢量交付"
+  default_prompt: "请使用 $research-model-diagrams，根据论文与当前代码绘制模型框架图，采用中文说明、英文算法标签，并交付可编辑 SVG、PNG 和 PDF。"

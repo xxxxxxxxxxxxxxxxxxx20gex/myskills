@@ -33,6 +33,7 @@ export const repositorySkills = [
     ];
 
 export const skillDetails = {
+      "research-model-diagrams": {name:"科研模型框架图",icon:"▦",color:"purple",summary:"依据论文与代码绘制科研模型框架图，用方块、矩阵和张量叠片展示 Patch、Token 与特征变化，交付可编辑 SVG、PNG 和 PDF。",capabilities:["核对模型数据流、残差与融合关系","展开 Patch 切块、Token 和张量形状变化","矢量绘图与结构、排版、格式验收"],examples:["绘制 ViT 并展示 Patch 到 Token 的变化","根据代码绘制带辅助分支的模型框架图"],outputs:["可编辑 SVG","高清 PNG 与矢量 PDF","可复现绘图源文件"],notes:["按当前模型核对维度与结构","绘图和导出依赖实际可用工具","参考案例资源不随 Skill 提供"],path:"自创skills/research-model-diagrams"},
       "gpt-image": {name:"GPT Image",icon:"✦",color:"blue",summary:"通过 OpenAI-compatible Images API 完成从提示词设计到生成、参考图编辑和局部重绘的完整流程。",capabilities:["文生图、参考图编辑与 Mask 局部重绘","162 条分类提示词案例与中文排版方法","多参考图、尺寸、质量和输出格式控制"],examples:["制作中文活动海报并准确显示指定文案","把产品参考图改成商业摄影风格","根据透明 Mask 只替换图片局部"],outputs:["PNG、JPEG 或 WebP 图片","提示词与关键生成参数","多张变体图片"],notes:["需要 OPENAI_BASE_URL 与 OPENAI_API_KEY","默认模型为 gpt-image-2","真实密钥仅保存在本地 .env"],path:"自创skills/gpt-image"},
       "html-ppt-build": {name:"HTML PPT Build",icon:"▣",color:"purple",summary:"把长报告和 Markdown 转化为独立 HTML 幻灯片，以网页排版保证中文技术内容清晰，再导出为 PPTX。",capabilities:["内容拆页与技术叙事编排","独立 HTML/CSS 幻灯片制作","全页预览与高清图片式 PPTX 导出"],examples:["把项目申报书制作成技术答辩 PPT","将 Markdown 报告转换为高密度演示稿","生成架构、技术路线和项目成效页面"],outputs:["slide-XX.html 页面","全幻灯片预览索引","高清图片式 PPTX"],notes:["适合文字密集的中文技术汇报","PPTX 内页面以高清图呈现","复杂素材可能需要额外生成"],path:"自创skills/html-ppt-build"},
       "ppt-technical-redesign": {name:"PPT Technical Redesign",icon:"◫",color:"purple",summary:"从信息结构、表达逻辑和视觉层级三个方面重构普通 PPT，使其更像专业技术汇报而非模板堆叠。",capabilities:["重组页面叙事和信息层级","技术路线、架构与能力页面重设计","将泛化表述改为项目专属内容"],examples:["改造项目申报和比赛路演页面","提升论文答辩或研究报告的专业度","把一页文字稿重构为技术能力图"],outputs:["重构后的页面文案和布局方案","高信息密度技术页面","可继续制作的视觉规格"],notes:["强调逻辑与项目针对性","不会凭空补造未经提供的数据","可与 PPT 制作 skill 联用"],path:"自创skills/ppt-technical-redesign"},
@@ -49,7 +50,7 @@ export const skillDetails = {
 
 export const skillCategories = [
   { id: 'office', label: '办公文档', description: '文档解析、编辑、表格与结构化交付', skills: ['mineru-to-markdown', 'docx', 'pdf', 'xlsx', 'thesis-aigc-rewrite', 'thesis-format-normalize'] },
-  { id: 'visual', label: '图像演示', description: '图片、海报、幻灯片与视觉表达', skills: ['gpt-image', 'html-ppt-build', 'ppt-technical-redesign', 'codex-ppt-skill', 'dashiai-ppt', 'imagegen', 'canvas-design', 'frontend-slides', 'pptx', 'seedream'] },
+  { id: 'visual', label: '图像演示', description: '图片、海报、幻灯片与视觉表达', skills: ['gpt-image', 'html-ppt-build', 'ppt-technical-redesign', 'research-model-diagrams', 'codex-ppt-skill', 'dashiai-ppt', 'imagegen', 'canvas-design', 'frontend-slides', 'pptx', 'seedream'] },
   { id: 'academic', label: '学术研究', description: '论文检索、官方资料与实时技术信息', skills: ['arxiv-search', 'semantic-scholar-search', 'openai-docs', 'technology-news-search', 'web-search'] },
   { id: 'media', label: '内容媒体', description: '公开内容采集、音视频生成与处理', skills: ['douyin-video-downloader', 'xiaohongshu-note-downloader', 'video-narration-tts', 'films-search', 'music-search', 'remotion', 'seedance'] },
   { id: 'development', label: '开发工具', description: '规划、开发、测试和 Skill 工程化', skills: ['professor-synapse', 'skill-creator', 'skill-installer', 'create-plan', 'develop-web-game', 'frontend-design', 'playwright', 'grill-me'] },

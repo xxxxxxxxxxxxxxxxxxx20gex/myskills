@@ -4,7 +4,7 @@
 
 ## 当前概况
 
-- Skill 总数：**42**
+- Skill 总数：**43**
 - 前端架构：原生 HTML + CSS + ES Modules，无构建步骤
 - 执行后端：本机 Codex CLI（sandbox：`danger-full-access`，approval：`never`）
 - 提示词策略：仅添加显式 `$skill-name` 选择标记，用户输入原样转发，无 Runner 行为提示
@@ -18,7 +18,7 @@
 |---|---|---|---:|---|---|
 | `skills-showcase.html` | 页面外壳 | 正常 | 11,648 B | — | 保留语义化 HTML、动态卡片容器、AI 详情、评分、项目版本管理和右侧对话区域 |
 | `playground/static/styles.css` | 样式系统 | 正常 | 26,257 B | — | 负责响应式布局、卡片、对话、Git 操作反馈、日志和产物预览样式 |
-| `playground/static/js/data.js` | Skill 辅助数据 | 正常 | 21,478 B | `repositorySkills`, `skillDetails`, `skillCategories` | 维护已有 Skill 的展示别名、视觉样式和默认功能分类 |
+| `playground/static/js/data.js` | Skill 辅助数据 | 正常 | 22,236 B | `repositorySkills`, `skillDetails`, `skillCategories` | 维护已有 Skill 的展示别名、视觉样式和默认功能分类 |
 | `playground/static/js/catalog.js` | 目录交互 | 正常 | 11,442 B | `initializeCatalog` | 根据后端实际目录渲染分类、组合筛选、AI 分析结论和详情弹窗 |
 | `playground/static/js/api.js` | API 客户端 | 正常 | 3,137 B | `apiBase`, `getRunnerConfig`, `createRun`, `getRun`, `cancelRun`, `getRatings`, `saveRatingLevels`, `saveSkillRating`, `getGitStatus`, `getGitDiff`, `fetchGitUpdates`, `pullGitUpdates`, `commitAndPushGit`, `saveGitProxyPort`, `getSkills`, `analyzeSkill`, `uploadAttachment` | 封装配置、目录、AI 分析、评分、Git、附件、任务和运行状态接口 |
 | `playground/static/js/artifacts.js` | 产物渲染 | 正常 | 1,760 B | `createArtifacts` | 预览图片、音频、视频、HTML 和普通文件 |
@@ -36,8 +36,8 @@
 | `playground/run_registry.py` | 运行记录 | 正常 | 4,263 B | — | 将有界运行状态、日志和产物元数据线程安全地持久化到 .runs，支持服务重启恢复 |
 | `playground/rating_service.py` | 评分服务 | 正常 | 4,599 B | — | 校验并原子更新可进入 Git 的 skill-metadata.yaml |
 | `playground/git_service.py` | Git 服务 | 正常 | 10,907 B | — | 执行白名单 Git 参数、保护敏感文件并通过 GCM 推送 |
-| `skill-metadata.yaml` | 维护数据 | 正常 | 588 B | — | 保存 A/B/C 显示设置、Skill 评分和备注，随 Git 同步 |
-| `skill-insights.yaml` | AI 分析数据 | 正常 | 9,376 B | — | 保存功能分类、用途结论和仅针对恶意行为/信息窃取/系统破坏/重大资源占用的安全评估 |
+| `skill-metadata.yaml` | 维护数据 | 正常 | 566 B | — | 保存 A/B/C 显示设置、Skill 评分和备注，随 Git 同步 |
+| `skill-insights.yaml` | AI 分析数据 | 正常 | 9,210 B | — | 保存功能分类、用途结论和仅针对恶意行为/信息窃取/系统破坏/重大资源占用的安全评估 |
 | `playground/generate_project_status.py` | 状态文档生成器 | 正常 | 12,451 B | — | 扫描模块、配置与 Skill 目录并更新本文件 |
 | `playground/tests/test_run_registry.py` | 后端回归测试 | 正常 | 3,409 B | — | 验证运行记录隔离、清理、取消、持久化和服务重启恢复逻辑 |
 | `playground/tests/test_run_cancel.py` | 停止任务回归测试 | 正常 | 1,798 B | — | 验证停止请求终止指定进程并持久化 canceled 状态 |
@@ -97,7 +97,7 @@ skills-showcase.html
 
 | 分类 | 目录 | 数量 | Skill |
 |---|---|---:|---|
-| 自创 | `自创skills/` | 12 | `arxiv-search`、`douyin-video-downloader`、`gpt-image`、`html-ppt-build`、`local-credential-memory`、`manage-myskills`、`mineru-to-markdown`、`ppt-technical-redesign`、`semantic-scholar-search`、`temporary-public-file-links`、`video-narration-tts`、`xiaohongshu-note-downloader` |
+| 自创 | `自创skills/` | 13 | `arxiv-search`、`douyin-video-downloader`、`gpt-image`、`html-ppt-build`、`local-credential-memory`、`manage-myskills`、`mineru-to-markdown`、`ppt-technical-redesign`、`research-model-diagrams`、`semantic-scholar-search`、`temporary-public-file-links`、`video-narration-tts`、`xiaohongshu-note-downloader` |
 | 已测 | `已测skills/` | 9 | `codex-ppt-skill`、`dashiai-ppt`、`imagegen`、`openai-docs`、`professor-synapse`、`skill-creator`、`skill-installer`、`thesis-aigc-rewrite`、`thesis-format-normalize` |
 | 待测 | `待测skills/` | 21 | `canvas-design`、`create-plan`、`develop-web-game`、`docx`、`films-search`、`frontend-design`、`frontend-slides`、`grill-me`、`imap-smtp-email`、`local-tools`、`music-search`、`pdf`、`playwright`、`pptx`、`remotion`、`scheduled-task`、`seedance`、`seedream`、`technology-news-search`、`web-search`、`xlsx` |
 

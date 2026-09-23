@@ -56,7 +56,7 @@ description: "依据论文与代码绘制、修订科研模型架构图，支持
 
 ## 下次如何调用
 
-本 Skill 位于仓库的 `自创skills/research-model-diagrams/`；Playground 通过项目链接注册，纳入仓库不等同于安装到全局 Skill 目录。也可直接提供本文件路径：
+本文件夹按用户要求保存在项目根目录；这不等同于已安装到全局 skill 搜索目录。可直接提供本文件路径：
 
 > 请按所提供的 `research-model-diagrams/SKILL.md` 绘制当前模型框架图。中文解释、英文算法标签，显示真实数据流与关键张量变化，交付 SVG、PNG、PDF。
 

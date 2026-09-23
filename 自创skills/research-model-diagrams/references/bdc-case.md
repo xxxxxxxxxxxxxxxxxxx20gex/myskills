@@ -4,7 +4,7 @@
 
 ## 案例资源
 
-以下路径相对原 BDC 项目中的 Skill 文件夹，仅用于说明案例来源；资源未随本 Skill 导入，不应将它们解析为当前 myskills 仓库文件。处理 BDC 项目时按用户提供的实际路径复核：
+相对本 skill 文件夹：
 
 - 参考图：`../assets/bdc_original_figure2_reference.png`
 - 矢量示例：`../assets/bdc_three_paths_editable.svg`
